@@ -1,0 +1,6 @@
+@Nutrion.GameServer_HostAddress = http://localhost:5281
+
+GET {{Nutrion.GameServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

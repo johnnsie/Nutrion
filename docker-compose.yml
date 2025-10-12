@@ -1,0 +1,50 @@
+﻿
+
+services:
+  # 🐇 RabbitMQ 4.2 with management UI
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"      # AMQP protocol (for your app)
+      - "15672:15672"    # HTTP management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  # 🐘 PostgreSQL 18
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: guest
+      POSTGRES_PASSWORD: guest
+      POSTGRES_DB: nutrion
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 🧑‍💻 pgAdmin 4 (browser-based Postgres UI)
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"        # Web UI
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@nutrion.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  postgres_data:
+  pgadmin_data:
