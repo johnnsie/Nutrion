@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Nutrion.Lib.Database.Game.Persistence;
+using Nutrion.Contracts;
+using Nutrion.Lib.Database.Game.Entities;
+using Nutrion.Lib.Database.Game.Hydration;
 using Nutrion.Messaging;
 using System;
 using System.Collections.Concurrent;
@@ -16,13 +18,13 @@ public class GameHub : Hub
 
     private readonly ColorAllocator _colors;
     private readonly IMessageProducer _bus;
-    private readonly IReadOnlyTileRepository _tileRepo;
+    private readonly IReadOnlyRepository _entityRepo;
 
-    public GameHub(ColorAllocator colors, IMessageProducer bus, IReadOnlyTileRepository tileRepo)
+    public GameHub(ColorAllocator colors, IMessageProducer bus, IReadOnlyRepository entityRepo)
     {
         _colors = colors;
         _bus = bus;
-        _tileRepo = tileRepo;   
+        _entityRepo = entityRepo;   
     }
 
     public override async Task OnConnectedAsync()
@@ -35,12 +37,9 @@ public class GameHub : Hub
 
         Console.WriteLine($"🟢 Connected: {id} color={color}");
 
-        var board = await _tileRepo.GetAllAsync();
-
         await Clients.Caller.SendAsync("Connected", new { id, color });
-        await Clients.Others.SendAsync("UserJoined", new { id, color });
 
-        
+        var board = await _entityRepo.GetBoardAsync();
         await Clients.Caller.SendAsync("BoardState", board);
 
     }
@@ -77,6 +76,23 @@ public class GameHub : Hub
             throw;
         }
     }
+
+    public async Task JoinGame(string playerName)
+    {
+        var id = Context.ConnectionId;
+        //var color = _colors.AssignColor();
+
+        var newPlayer = new Lib.Database.Game.Entities.Player()
+        {
+            Name = playerName,
+            OwnerId = id
+        };
+        
+        Console.WriteLine($"🟢 Player joined: {playerName} ({id}) color=NoneYet");
+
+        await _bus.PublishAsync("game.commands.player.join", newPlayer);
+    }
+
 
 }
 

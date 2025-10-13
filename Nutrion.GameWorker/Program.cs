@@ -13,9 +13,11 @@ var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnection));
 
-builder.Services.AddScoped<ITileRepository, TileRepository>();
+builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddSingleton<TileStateService>();
 builder.Services.AddHostedService<TileWorker>();
+builder.Services.AddHostedService<PlayerWorker>();
+
 
 builder.Services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationHostedService>();

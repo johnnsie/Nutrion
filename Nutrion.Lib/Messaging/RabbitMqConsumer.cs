@@ -10,10 +10,18 @@ namespace Nutrion.Messaging;
 
 public interface IMessageConsumer : IAsyncDisposable
 {
-    Task StartConsumingAsync(
+    /*
+     Task StartConsumingAsync(
         string queueName,
         Func<string, CancellationToken, Task> onMessageAsync,
         CancellationToken cancellationToken = default);
+    */
+
+    Task StartConsumingAsync(
+        string topicPattern,
+        Func<string /*routingKey*/, ReadOnlyMemory<byte> /*body*/, CancellationToken, Task> onMessage,
+        CancellationToken cancellationToken);
+
 }
 
 public class RabbitMqConsumer : IMessageConsumer
@@ -30,65 +38,65 @@ public class RabbitMqConsumer : IMessageConsumer
         _provider = provider;
     }
 
-    public async Task StartConsumingAsync(string queueName, Func<string, CancellationToken, Task> onMessageAsync, CancellationToken cancellationToken = default)
+    public async Task StartConsumingAsync(
+        string topicPattern,
+        Func<string /*routingKey*/, ReadOnlyMemory<byte> /*body*/, CancellationToken, Task> onMessage,
+        CancellationToken cancellationToken = default)
     {
         var connection = await _provider.GetConnectionAsync(cancellationToken);
         _channel = await connection.CreateChannelAsync();
 
-        await _channel.QueueDeclareAsync(
-            queueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: new Dictionary<string, object?>
-            {
-                ["x-max-priority"] = 10 // 0–10 levels of priority
-            });
+        const string exchangeName = "game.events.exchange";
 
+        // 🧩 Make sure the exchange exists and is a Topic exchange
+        await _channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true);
 
-        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 3, global: false);
+        await _channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true);
+
+        // 2️⃣ Server-named, auto-delete queue (like in tutorial)
+        var q = await _channel.QueueDeclareAsync();
+        string queueName = q.QueueName;
+
+        // 3️⃣ Bind to all game events
+        await _channel.QueueBindAsync(queue: queueName, exchange: exchangeName, routingKey: "game.events.#");
+        _logger.LogInformation("🐇 Bound queue {Queue} to {Exchange} with pattern game.events.#", queueName, exchangeName);
+
+        await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 5, global: false);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
-
-        var semaphore = new SemaphoreSlim(3); // max 10 concurrent tasks
+        var semaphore = new SemaphoreSlim(5);
 
         consumer.ReceivedAsync += async (ch, ea) =>
         {
-            await semaphore.WaitAsync(cancellationToken); // respect outer cancel
+            await semaphore.WaitAsync(cancellationToken);
 
             _ = Task.Run(async () =>
             {
-
-                string message = string.Empty;
-
                 try
                 {
-                    var body = ea.Body.ToArray();
-                    message = Encoding.UTF8.GetString(body);
-                    _logger.LogInformation("📥 Received message from '{Queue}': {Message}", queueName, message);
+                    var routingKey = ea.RoutingKey;
+                    var body = ea.Body;
+                    var message = Encoding.UTF8.GetString(body.Span);
 
-                    await onMessageAsync(message, cancellationToken);
+                    _logger.LogInformation("📨 Received from {RoutingKey}: {Message}", routingKey, message);
+
+                    await onMessage(routingKey, body, cancellationToken);
                     await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error processing message from {Queue}: {Message}", queueName, message);
+                    _logger.LogError(ex, "❌ Error processing message");
                     await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
                 }
                 finally
                 {
                     semaphore.Release();
                 }
-
             }, cancellationToken);
         };
 
-        _consumerTag = await _channel.BasicConsumeAsync(
-            queue: queueName,
-            autoAck: false,
-            consumer: consumer);
-
-        _logger.LogInformation("🐇 RabbitMQ consumer started on queue '{Queue}'", queueName);
+        await _channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer);
+        _logger.LogInformation("🐇 Listening on {Exchange} with pattern '{Pattern}'", exchangeName, topicPattern);
     }
 
     public async ValueTask DisposeAsync()

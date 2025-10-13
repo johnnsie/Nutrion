@@ -53,11 +53,12 @@ public class Worker : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 
-    private async Task HandleMessageAsync(string message, CancellationToken cancellationToken)
+    private async Task HandleMessageAsync(string routingKey, ReadOnlyMemory<byte> body, CancellationToken ct)
     {
         try
         {
-            _logger.LogInformation("Processing message: {Message}", message);
+            var json = System.Text.Encoding.UTF8.GetString(body.Span);
+            _logger.LogInformation("Processing message: {Message}", json);
 
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization =
@@ -65,7 +66,7 @@ public class Worker : BackgroundService
 
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var content = new StringContent(message, Encoding.UTF8, "application/json");
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Await the HTTP POST call
             using var response = await client.PostAsync(
@@ -87,7 +88,7 @@ public class Worker : BackgroundService
                 {
                     Status = MessageStatus.Processed,
                     ReplyMessage = raw,
-                    MessagesJson = JsonSerializer.Serialize(message)
+                    MessagesJson = JsonSerializer.Serialize(json)
                 };
 
                 await _producer.PublishAsync("openAI_reply", openRequest);

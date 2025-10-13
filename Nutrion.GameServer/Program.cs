@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using MessagePack;
+using MessagePack.Resolvers;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Nutrion.GameServer;
 using Nutrion.GameServer.SignalR;
 using Nutrion.Lib.Database;
-using Nutrion.Lib.Database.Game.Persistence;
+using Nutrion.Lib.Database.Game.Hydration;
 using Nutrion.Messaging;
 using System.Collections.Concurrent;
 
@@ -18,13 +20,25 @@ builder.Services.AddTransient<IMessageConsumer, RabbitMqConsumer>();
 // ✅ register the allocator so DI can resolve it
 builder.Services.AddHostedService<GameEventConsumer>();
 
+// Add SignalR and enable MessagePack
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
+/*
+    .AddMessagePackProtocol(options =>
+    {
+        options.SerializerOptions = MessagePackSerializerOptions.Standard
+           // .WithSecurity(MessagePackSecurity.UntrustedData)
+            .WithResolver(ContractlessStandardResolver.Instance)
+            .WithCompression(MessagePackCompression.Lz4BlockArray);
+.
+    });
+*/
+
 builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Debug);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
-builder.Services.AddScoped<IReadOnlyTileRepository, ReadOnlyTileRepository>();
+builder.Services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>();
 
 
 builder.Services.AddCors(options =>

@@ -10,8 +10,4 @@
     <PackageReference Include="TypeGen" Version="6.0.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="contracts\" />
-  </ItemGroup>
-
 </Project>

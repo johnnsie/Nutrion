@@ -33,7 +33,7 @@ public class TileStateService
 
         // Create a scope to access scoped services (DbContext, repository)
         using var scope = _scopeFactory.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<ITileRepository>();
+        var repo = scope.ServiceProvider.GetRequiredService<IEntityRepository>();
 
         await repo.SaveTileAsync(new Tile
         {

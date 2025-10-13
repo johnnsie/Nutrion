@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<OpenAIRequest> OpenAIRequest { get; set; }
 
     public DbSet<Tile> Tile => Set<Tile>();
+    public DbSet<Player> Player { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

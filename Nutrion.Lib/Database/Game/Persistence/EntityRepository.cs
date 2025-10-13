@@ -7,17 +7,18 @@ using System.Text;
 
 namespace Nutrion.GameWorker.Persistence;
 
-public interface ITileRepository
+public interface IEntityRepository
 {
     Task<Tile?> GetTileAsync(int q, int r, CancellationToken cancellationToken = default);
     Task SaveTileAsync(Tile tile, CancellationToken cancellationToken = default);
+    Task SavePlayerAsync(Player tile, CancellationToken cancellationToken = default);
 }
 
-public class TileRepository : ITileRepository
+public class EntityRepository : IEntityRepository
 {
     private readonly AppDbContext _db;
 
-    public TileRepository(AppDbContext db)
+    public EntityRepository(AppDbContext db)
     {
         _db = db;
     }
@@ -44,4 +45,27 @@ public class TileRepository : ITileRepository
 
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task SavePlayerAsync(Player player, CancellationToken cancellationToken = default)
+    {
+        var existing = await _db.Player
+            .FirstOrDefaultAsync(p => p.OwnerId == player.OwnerId, cancellationToken);
+
+        if (existing == null)
+        {
+            // New player → insert
+            player.LastUpdated = DateTimeOffset.UtcNow;
+            _db.Player.Add(player);
+        }
+        else
+        {
+            // Existing player → update
+            existing.Color = player.Color;
+            existing.Name = player.Name;
+            existing.LastUpdated = DateTimeOffset.UtcNow;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
 }

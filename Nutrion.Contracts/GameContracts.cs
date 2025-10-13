@@ -1,14 +1,45 @@
-﻿namespace Nutrion.Contracts;
+﻿using TypeGen.Core.SpecGeneration;
+using TypeGen.Core.TypeAnnotations;
+
+namespace Nutrion.Contracts;
+
+public class GameContractsSpec : GenerationSpec
+{
+    public GameContractsSpec()
+    {
+        AddClass<Player>();
+        AddClass<PlayerState>();
+        AddClass<ResourceRate>();
+    }
+}
+
 
 // Nutrion.Contracts/GameContracts.cs
-public record Envelope<T>(string Type, T Payload, DateTime Timestamp);
+public record GameEvent<T>(string Type, T Payload, DateTime Timestamp);
 
-public record TileUpdated(
-    string Id,
+[ExportTsClass]
+public record Player(
+    Guid Id,
     string OwnerId,
-    int ProductionRate
+    string Color,
+    string Name,
+    DateTime LastUpdated
 );
 
+[ExportTsClass]
+public record Board(
+    List<Tile> tiles
+);
+
+[ExportTsClass]
+public record Tile(
+    int q,
+    int r,
+    string? color,
+    int version
+);
+
+[ExportTsClass]
 public record PlayerState(
     string Id,
     string Name,
@@ -16,6 +47,7 @@ public record PlayerState(
     int PowerLevel
 );
 
+[ExportTsClass]
 public record ResourceRate(
     string ResourceType,
     int RatePerHour,

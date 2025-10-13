@@ -1,5 +1,4 @@
 ﻿{
-  "assemblies": [ "Nutrion.Contracts.dll" ],
- // "outputPath": "./contracts",
+  "outputPath": "contracts/",
   "generationSpecClassName": "GameContractsSpec"
 }

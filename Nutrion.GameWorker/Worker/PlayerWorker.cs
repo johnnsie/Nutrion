@@ -1,35 +1,37 @@
 ﻿using global::Nutrion.Data;
 using global::Nutrion.Messaging;
+using Nutrion.GameWorker.Persistence;
 using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database.Game.Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Drawing;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Channels;
 
 namespace Nutrion.GameServer.Worker;
 
-public class TileWorker : BackgroundService
+public class PlayerWorker : BackgroundService
 {
-    private readonly ILogger<TileWorker> _logger;
+    private readonly ILogger<PlayerWorker> _logger;
     private readonly IMessageProducer _producer;
     private readonly IMessageConsumer _consumer;
-    private readonly TileStateService _tileState;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public TileWorker(
-        ILogger<TileWorker> logger,
+    public PlayerWorker(
+        ILogger<PlayerWorker> logger,
         IMessageProducer producerService,
         IMessageConsumer consumerService,
-        TileStateService tileState
+        IServiceScopeFactory scopeFactory
         )
     {
         _logger = logger;
         _producer = producerService;
         _consumer = consumerService;
-        _tileState = tileState;
-
+        _scopeFactory = scopeFactory;
         _logger.LogInformation("Worker constructed");
     }
 
@@ -38,7 +40,7 @@ public class TileWorker : BackgroundService
         try
         {
             _logger.LogInformation("ExecuteAsync started");
-            await _consumer.StartConsumingAsync("game.commands.tile.claim", HandleMessageAsync, stoppingToken);
+            await _consumer.StartConsumingAsync("game.commands.player.join", HandleMessageAsync, stoppingToken);
         }
         catch (Exception ex)
         {
@@ -59,18 +61,18 @@ public class TileWorker : BackgroundService
         try
         {
             var message = System.Text.Encoding.UTF8.GetString(body.Span);
-            var cmd = JsonSerializer.Deserialize<Tile>(message);
+            var cmd = JsonSerializer.Deserialize<Player>(message);
             if (cmd == null) return;
 
-            _logger.LogInformation("Received ClaimTile ({Q},{R}) from {User}", cmd.Q, cmd.R, cmd.OwnerId);
+            // Create a scope to access scoped services (DbContext, repository)
+            using var scope = _scopeFactory.CreateScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IEntityRepository>();
 
-            var changed = await _tileState.ClaimTileAsync(cmd.OwnerId, cmd.Color, cmd.Q, cmd.R, ct);
-            if (!changed) return;
+            await repo.SavePlayerAsync(cmd, ct);
 
-            // ✅ Publish event to "game.events.tile.claimed"
-            await _producer.PublishAsync("game.events.tile.claimed", cmd, cancellationToken: ct);
-            _logger.LogInformation("Published TileClaimed ({Q},{R}) by {User}", cmd.Q, cmd.R, cmd.OwnerId);
-
+            // ✅ Publish event to "game.eventss.tile.claimed"
+            await _producer.PublishAsync("game.events.player.join", cmd, cancellationToken: ct);
+            _logger.LogInformation("Published game.events.player.join {User}", cmd.Name);
         }
         catch (OperationCanceledException)
         {
