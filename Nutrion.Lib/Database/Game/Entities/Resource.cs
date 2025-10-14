@@ -9,14 +9,23 @@ using TypeGen.Core.TypeAnnotations;
 namespace Nutrion.Lib.Database.Game.Entities;
 
 [ExportTsClass]
-[Table("Player")]
-public class Player
+[Table("Resource")]
+public class Resource
 {
     [Key]
-    [JsonIgnore]
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string OwnerId { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
+
+    [Required]
     public string Name { get; set; } = string.Empty;
-    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+
+    public int Quantity { get; set; }
+
+    public string Description { get; set; } = string.Empty;
+
+    // Foreign key to Account
+    [ForeignKey(nameof(AccountId))]
+    public Guid AccountId { get; set; }
+
+    [JsonIgnore] // 🚀 Prevent circular reference
+    public Account Account { get; set; } = null!;
 }

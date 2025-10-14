@@ -12,9 +12,10 @@ public class AppDbContext : DbContext
 
     public DbSet<OutboxMessage> OutboxMessage { get; set; }
     public DbSet<OpenAIRequest> OpenAIRequest { get; set; }
-
-    public DbSet<Tile> Tile => Set<Tile>();
+    public DbSet<Account> Account { get; set; }
     public DbSet<Player> Player { get; set; }
+    public DbSet<Resource> Resource { get; set; }
+    public DbSet<Tile> Tile { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -24,7 +25,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OutboxMessage>()
             .HasIndex(o => new { o.ProcessedOn, o.Topic }); // For faster querying pending messages
     }
-
 }
 
 [Table("OutboxMessage")]

@@ -5,6 +5,7 @@ using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Lib.Database.Game.Persistence;
+using Nutrion.Lib.GameLogic.Systems;
 using Nutrion.Messaging;
 using System;
 
@@ -14,9 +15,13 @@ var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnection));
 
-builder.Services.AddScoped<IRepository<Tile>, Repository<Tile>>();
-builder.Services.AddScoped<IRepository<Player>, Repository<Player>>();
-builder.Services.AddScoped<EntityRepository>(); 
+//builder.Services.AddScoped<IRepository<Tile>, Repository<Tile>>();
+//builder.Services.AddScoped<IRepository<Player>, Repository<Player>>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<EntityRepository>();
+
+// register game logic systems
+builder.Services.AddScoped<PlayerSystem>();
 
 builder.Services.AddSingleton<TileStateService>();
 builder.Services.AddHostedService<TileWorker>();

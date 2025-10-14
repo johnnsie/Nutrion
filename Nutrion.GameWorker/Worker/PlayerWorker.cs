@@ -1,98 +1,42 @@
-﻿using global::Nutrion.Data;
-using global::Nutrion.Messaging;
-using Nutrion.GameWorker.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Nutrion.Lib.Database.Game.Entities;
-using Nutrion.Lib.Database.Game.Persistence;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.Drawing;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Channels;
+using Nutrion.Lib.GameLogic.Systems;
+using Nutrion.Messaging;
 
 namespace Nutrion.GameServer.Worker;
 
-public class PlayerWorker : BackgroundService
+public class PlayerWorker : MessageWorkerBase<Player>
 {
-    private readonly ILogger<PlayerWorker> _logger;
     private readonly IMessageProducer _producer;
-    private readonly IMessageConsumer _consumer;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<PlayerWorker> _logger;
 
     public PlayerWorker(
         ILogger<PlayerWorker> logger,
-        IMessageProducer producerService,
-        IMessageConsumer consumerService,
-        IServiceScopeFactory scopeFactory
-        )
+        IMessageProducer producer,
+        IMessageConsumer consumer,
+        IServiceScopeFactory scopeFactory)
+        : base(logger, producer, consumer, scopeFactory,
+               exchange: "game.commands.exchange",
+               topicPattern: "game.commands.player.join",
+               queueName: "game.commands.playerworker")
     {
+        _producer = producer;
         _logger = logger;
-        _producer = producerService;
-        _consumer = consumerService;
-        _scopeFactory = scopeFactory;
-        _logger.LogInformation("Worker constructed");
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task HandleMessageAsync(Player player, IServiceScope scope, CancellationToken ct)
     {
-        try
-        {
-            _logger.LogInformation("ExecuteAsync started");
-            await _consumer.StartConsumingTopicAsync(
-                "game.commands.exchange",
-                "game.commands.player.join", 
-                HandleMessageAsync, stoppingToken,
-                queueName: "game.commands.playerworker");
+        var playerSystem = scope.ServiceProvider.GetRequiredService<PlayerSystem>();
 
-            await Task.Delay(Timeout.Infinite, stoppingToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "ExecuteAsync crashed");
-            throw;
-        }
+        var newplayer = await playerSystem.GetOrCreateAsync(player, ct);
 
+        await _producer.PublishTopicAsync(
+            "game.events.exchange",
+            "game.events.player.joined",
+            player,
+            cancellationToken: ct);
+
+        _logger.LogInformation("Player {User} joined", newplayer.Name);
     }
-
-    public override async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await _consumer.DisposeAsync();
-        await base.StopAsync(cancellationToken);
-    }
-
-    private async Task HandleMessageAsync(string routingKey, ReadOnlyMemory<byte> body, CancellationToken ct)
-    {
-        try
-        {
-            var message = System.Text.Encoding.UTF8.GetString(body.Span);
-            var cmd = JsonSerializer.Deserialize<Player>(message);
-            if (cmd == null) return;
-
-            // Create a scope to access scoped services (DbContext, repository)
-            using var scope = _scopeFactory.CreateScope();
-            var tileRepo = scope.ServiceProvider.GetRequiredService<IRepository<Player>>();
-
-            // Generic save handles both insert/update
-            await tileRepo.SaveAsync(
-                entity: cmd,
-                match: t => t.OwnerId == cmd.OwnerId,
-                cancellationToken: ct
-            );
-
-            // ✅ Publish event to "game.eventss.tile.claimed"
-            await _producer.PublishTopicAsync("game.events.exchange","game.events.player.joined", cmd, cancellationToken: ct);
-            _logger.LogInformation("Published game.events.player.join {User}", cmd.Name);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("Message processing was canceled.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing message");
-        }
-    }
-
 }

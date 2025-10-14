@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
 using TypeGen.Core.TypeAnnotations;
@@ -9,14 +10,15 @@ using TypeGen.Core.TypeAnnotations;
 namespace Nutrion.Lib.Database.Game.Entities;
 
 [ExportTsClass]
-[Table("Player")]
-public class Player
+[Table("Account")]
+public class Account
 {
     [Key]
-    [JsonIgnore]
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string OwnerId { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+
+    [Required]
+    public Player Player { get; set; } = null!;
+
+    public ICollection<Resource> Resources { get; set; } = new List<Resource>();
+
 }

@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameServer", "Nutri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameWorker", "Nutrion.GameWorker\Nutrion.GameWorker.csproj", "{485A524B-1F8B-4213-BE87-8DF07304AF70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.Contracts", "Nutrion.Contracts\Nutrion.Contracts.csproj", "{6A818E12-6CE4-49E1-B846-D3E67A2154B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameEngine", "Nutrion.GameEngine\Nutrion.GameEngine.csproj", "{A0CAB751-F27C-4909-B524-490DE925C720}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,10 +51,10 @@ Global
 		{485A524B-1F8B-4213-BE87-8DF07304AF70}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{485A524B-1F8B-4213-BE87-8DF07304AF70}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{485A524B-1F8B-4213-BE87-8DF07304AF70}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6A818E12-6CE4-49E1-B846-D3E67A2154B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6A818E12-6CE4-49E1-B846-D3E67A2154B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6A818E12-6CE4-49E1-B846-D3E67A2154B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6A818E12-6CE4-49E1-B846-D3E67A2154B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0CAB751-F27C-4909-B524-490DE925C720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0CAB751-F27C-4909-B524-490DE925C720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0CAB751-F27C-4909-B524-490DE925C720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0CAB751-F27C-4909-B524-490DE925C720}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

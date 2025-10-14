@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Nutrion.Contracts;
+using Microsoft.EntityFrameworkCore;
 using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Lib.Database.Game.Hydration;
 using Nutrion.Messaging;
 using System;
 using System.Collections.Concurrent;
+using System.Drawing;
 
 namespace Nutrion.GameServer.SignalR;
 
@@ -19,12 +20,14 @@ public class GameHub : Hub
     private readonly ColorAllocator _colors;
     private readonly IMessageProducer _bus;
     private readonly ITileReadRepository _tileRepo;
+    private readonly IReadRepository<Account> _readRepo;
 
-    public GameHub(ColorAllocator colors, IMessageProducer bus, ITileReadRepository tileRepo)
+    public GameHub(ColorAllocator colors, IMessageProducer bus, ITileReadRepository tileRepo, IReadRepository<Account> readRepo)
     {
         _colors = colors;
         _bus = bus;
         _tileRepo = tileRepo;
+        _readRepo = readRepo;
     }
 
     public override async Task OnConnectedAsync()
@@ -64,7 +67,7 @@ public class GameHub : Hub
                 return;
 
             await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.claim", 
-                new Lib.Database.Game.Entities.Tile() {  
+                new Tile() {  
                     Color = session.Color, 
                     OwnerId = session.Id, 
                     Q = q, 
@@ -84,7 +87,9 @@ public class GameHub : Hub
         var id = Context.ConnectionId;
         //var color = _colors.AssignColor();
 
-        var newPlayer = new Lib.Database.Game.Entities.Player()
+        Console.WriteLine($"🟢 GetAccount: {id} playerName={playerName}");
+
+        var newPlayer = new Player()
         {
             Name = playerName,
             OwnerId = id,
@@ -94,6 +99,25 @@ public class GameHub : Hub
         Console.WriteLine($"🟢 Player joined: {playerName} ({id}) color=NoneYet");
 
         await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.player.join", newPlayer);
+    }
+
+    public async Task GetAccount(string playerName)
+    {
+        var id = Context.ConnectionId;
+        //var color = _colors.AssignColor();
+
+        Console.WriteLine($"🟢 GetAccount: {id} playerName={playerName}");
+
+        //var account = await _readRepo.FindAsync(a => a.Player.Name == playerName);
+        var account = await _readRepo.GetAsync(
+            a => a.Player.Name == playerName,
+            include: q => q.Include(a => a.Player)
+                           .Include(a => a.Resources)
+        );
+
+        Console.WriteLine($"🟢 HOW MANY : {account}");
+
+        await Clients.Caller.SendAsync("AccountState", account);
     }
 
 

@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using TypeGen.Core.TypeAnnotations;
 
 namespace Nutrion.Lib.Database.Game.Entities;
 
+[ExportTsClass]
 [Table("Tile")]
 public class Tile
 {
@@ -14,16 +16,4 @@ public class Tile
     public string OwnerId { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
-}
-
-// Move the extension method to a non-generic static class
-public static class TileExtensions
-{
-    public static Nutrion.Contracts.Tile ToContract(this Tile entity)
-        => new(
-            entity.Q,
-            entity.R,
-            entity.Color,
-            0
-        );
 }

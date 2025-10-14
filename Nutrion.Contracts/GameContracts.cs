@@ -15,7 +15,6 @@ public class GameContractsSpec : GenerationSpec
 
 
 // Nutrion.Contracts/GameContracts.cs
-public record GameEvent<T>(string Type, T Payload, DateTime Timestamp);
 
 [ExportTsClass]
 public record Player(
@@ -26,10 +25,12 @@ public record Player(
     DateTime LastUpdated
 );
 
+
 [ExportTsClass]
 public record Board(
     List<Tile> tiles
 );
+
 
 [ExportTsClass]
 public record Tile(

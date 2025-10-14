@@ -40,6 +40,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
+builder.Services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>)); // ✅ Read repo
 
 
 builder.Services.AddCors(options =>

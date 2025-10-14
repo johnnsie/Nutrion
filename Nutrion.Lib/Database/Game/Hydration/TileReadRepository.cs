@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Nutrion.Contracts;
 using Nutrion.Lib.Database.Game.Entities;
 using Tile = Nutrion.Lib.Database.Game.Entities.Tile;
 
@@ -17,11 +16,7 @@ public class TileReadRepository : ReadRepository<Tile>, ITileReadRepository
 
     public async Task<Board> GetBoardAsync(CancellationToken cancellationToken = default)
     {
-        var tiles = await GetAllAsync(cancellationToken);
-        var contractTiles = tiles
-            .Select(t => new Nutrion.Contracts.Tile(t.Q, t.R, t.Color, 0))
-            .ToList();
-
-        return new Board(contractTiles);
+        var tiles = await GetAllAsync(null,cancellationToken);
+        return new Board(tiles);
     }
 }
