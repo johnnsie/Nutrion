@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Nutrion.Lib.Database.Game.Entities;
 
@@ -10,6 +11,7 @@ namespace Nutrion.Lib.Database.Game.Entities;
 public class Player
 {
     [Key]
+    [JsonIgnore]
     public Guid Id { get; set; } = Guid.NewGuid();
     public string OwnerId { get; set; } = string.Empty;
     public string Color { get; set; } = string.Empty;

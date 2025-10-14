@@ -18,13 +18,13 @@ public class GameHub : Hub
 
     private readonly ColorAllocator _colors;
     private readonly IMessageProducer _bus;
-    private readonly IReadOnlyRepository _entityRepo;
+    private readonly ITileReadRepository _tileRepo;
 
-    public GameHub(ColorAllocator colors, IMessageProducer bus, IReadOnlyRepository entityRepo)
+    public GameHub(ColorAllocator colors, IMessageProducer bus, ITileReadRepository tileRepo)
     {
         _colors = colors;
         _bus = bus;
-        _entityRepo = entityRepo;   
+        _tileRepo = tileRepo;
     }
 
     public override async Task OnConnectedAsync()
@@ -39,8 +39,9 @@ public class GameHub : Hub
 
         await Clients.Caller.SendAsync("Connected", new { id, color });
 
-        var board = await _entityRepo.GetBoardAsync();
-        await Clients.Caller.SendAsync("BoardState", board);
+        var boardSecond = await _tileRepo.GetBoardAsync();
+
+        await Clients.Caller.SendAsync("BoardState", boardSecond);
 
     }
 
@@ -62,11 +63,12 @@ public class GameHub : Hub
             if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
                 return;
 
-            //await Clients.All.SendAsync("TileClaimed",
-            //    new { q, r, color = session.Color, user = session.Id });
-
-            await _bus.PublishAsync("game.commands.tile.claim",
-                new { UserId = session.Id, Color = session.Color, Q = q, R = r });
+            await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.claim", 
+                new Lib.Database.Game.Entities.Tile() {  
+                    Color = session.Color, 
+                    OwnerId = session.Id, 
+                    Q = q, 
+                    R = r });
 
             Console.WriteLine($"📤 published claim ({q},{r})");
         }
@@ -85,12 +87,13 @@ public class GameHub : Hub
         var newPlayer = new Lib.Database.Game.Entities.Player()
         {
             Name = playerName,
-            OwnerId = id
+            OwnerId = id,
+            Id = Guid.NewGuid()
         };
         
         Console.WriteLine($"🟢 Player joined: {playerName} ({id}) color=NoneYet");
 
-        await _bus.PublishAsync("game.commands.player.join", newPlayer);
+        await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.player.join", newPlayer);
     }
 
 

@@ -2,26 +2,18 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading.Channels;
 
 namespace Nutrion.Messaging;
 
 public interface IMessageConsumer : IAsyncDisposable
 {
-    /*
-     Task StartConsumingAsync(
-        string queueName,
-        Func<string, CancellationToken, Task> onMessageAsync,
-        CancellationToken cancellationToken = default);
-    */
-
-    Task StartConsumingAsync(
+    Task StartConsumingTopicAsync(
+        string exchangeName,
         string topicPattern,
-        Func<string /*routingKey*/, ReadOnlyMemory<byte> /*body*/, CancellationToken, Task> onMessage,
-        CancellationToken cancellationToken);
-
+        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task> onMessage,
+        CancellationToken cancellationToken = default,
+        string? queueName = null);
 }
 
 public class RabbitMqConsumer : IMessageConsumer
@@ -38,28 +30,33 @@ public class RabbitMqConsumer : IMessageConsumer
         _provider = provider;
     }
 
-    public async Task StartConsumingAsync(
+    public async Task StartConsumingTopicAsync(
+        string exchangeName,
         string topicPattern,
-        Func<string /*routingKey*/, ReadOnlyMemory<byte> /*body*/, CancellationToken, Task> onMessage,
-        CancellationToken cancellationToken = default)
+        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task> onMessage,
+        CancellationToken cancellationToken = default,
+        string? queueName = null)
     {
         var connection = await _provider.GetConnectionAsync(cancellationToken);
         _channel = await connection.CreateChannelAsync();
 
-        const string exchangeName = "game.events.exchange";
-
-        // 🧩 Make sure the exchange exists and is a Topic exchange
+        // 🧩 Ensure exchange exists and is a Topic type
         await _channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true);
 
-        await _channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true);
+        // 🧩 Determine queue name (use provided or generate unique one)
+        var queue = queueName ?? $"{exchangeName}.{Guid.NewGuid()}";
 
-        // 2️⃣ Server-named, auto-delete queue (like in tutorial)
-        var q = await _channel.QueueDeclareAsync();
-        string queueName = q.QueueName;
+        // 1️⃣ Declare queue
+        await _channel.QueueDeclareAsync(
+            queue: queue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false);
 
-        // 3️⃣ Bind to all game events
-        await _channel.QueueBindAsync(queue: queueName, exchange: exchangeName, routingKey: "game.events.#");
-        _logger.LogInformation("🐇 Bound queue {Queue} to {Exchange} with pattern game.events.#", queueName, exchangeName);
+        // 2️⃣ Bind queue to exchange with provided topic pattern
+        await _channel.QueueBindAsync(queue, exchangeName, topicPattern);
+        _logger.LogInformation("🐇 Bound queue {Queue} to {Exchange} with pattern {Pattern}",
+                               queue, exchangeName, topicPattern);
 
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 5, global: false);
 
@@ -95,12 +92,13 @@ public class RabbitMqConsumer : IMessageConsumer
             }, cancellationToken);
         };
 
-        await _channel.BasicConsumeAsync(queue: queueName, autoAck: true, consumer: consumer);
-        _logger.LogInformation("🐇 Listening on {Exchange} with pattern '{Pattern}'", exchangeName, topicPattern);
+        _consumerTag = await _channel.BasicConsumeAsync(queue: queue, autoAck: false, consumer: consumer);
+        _logger.LogInformation("🐇 Listening on queue {Queue} (exchange={Exchange}, pattern='{Pattern}')", queue, exchangeName, topicPattern);
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) return;
         _disposed = true;
 
         try

@@ -1,8 +1,8 @@
 ﻿using global::Nutrion.Data;
 using global::Nutrion.Messaging;
-using Nutrion.GameWorker.Persistence;
 using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database.Game.Entities;
+using Nutrion.Lib.Database.Game.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Drawing;
@@ -40,7 +40,13 @@ public class PlayerWorker : BackgroundService
         try
         {
             _logger.LogInformation("ExecuteAsync started");
-            await _consumer.StartConsumingAsync("game.commands.player.join", HandleMessageAsync, stoppingToken);
+            await _consumer.StartConsumingTopicAsync(
+                "game.commands.exchange",
+                "game.commands.player.join", 
+                HandleMessageAsync, stoppingToken,
+                queueName: "game.commands.playerworker");
+
+            await Task.Delay(Timeout.Infinite, stoppingToken);
         }
         catch (Exception ex)
         {
@@ -66,12 +72,17 @@ public class PlayerWorker : BackgroundService
 
             // Create a scope to access scoped services (DbContext, repository)
             using var scope = _scopeFactory.CreateScope();
-            var repo = scope.ServiceProvider.GetRequiredService<IEntityRepository>();
+            var tileRepo = scope.ServiceProvider.GetRequiredService<IRepository<Player>>();
 
-            await repo.SavePlayerAsync(cmd, ct);
+            // Generic save handles both insert/update
+            await tileRepo.SaveAsync(
+                entity: cmd,
+                match: t => t.OwnerId == cmd.OwnerId,
+                cancellationToken: ct
+            );
 
             // ✅ Publish event to "game.eventss.tile.claimed"
-            await _producer.PublishAsync("game.events.player.join", cmd, cancellationToken: ct);
+            await _producer.PublishTopicAsync("game.events.exchange","game.events.player.joined", cmd, cancellationToken: ct);
             _logger.LogInformation("Published game.events.player.join {User}", cmd.Name);
         }
         catch (OperationCanceledException)

@@ -2,6 +2,7 @@
 using global::Nutrion.Messaging;
 using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database.Game.Entities;
+using Nutrion.Lib.Database.Game.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Net.Http.Headers;
@@ -17,18 +18,21 @@ public class TileWorker : BackgroundService
     private readonly IMessageProducer _producer;
     private readonly IMessageConsumer _consumer;
     private readonly TileStateService _tileState;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public TileWorker(
         ILogger<TileWorker> logger,
         IMessageProducer producerService,
         IMessageConsumer consumerService,
-        TileStateService tileState
+        TileStateService tileState,
+        IServiceScopeFactory scopeFactory
         )
     {
         _logger = logger;
         _producer = producerService;
         _consumer = consumerService;
         _tileState = tileState;
+        _scopeFactory = scopeFactory;
 
         _logger.LogInformation("Worker constructed");
     }
@@ -38,7 +42,15 @@ public class TileWorker : BackgroundService
         try
         {
             _logger.LogInformation("ExecuteAsync started");
-            await _consumer.StartConsumingAsync("game.commands.tile.claim", HandleMessageAsync, stoppingToken);
+            await _consumer.StartConsumingTopicAsync(
+                "game.commands.exchange", 
+                "game.commands.tile.claim", 
+                HandleMessageAsync, stoppingToken,    
+                queueName: "game.commands.tileworker");
+
+
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+
         }
         catch (Exception ex)
         {
@@ -62,14 +74,20 @@ public class TileWorker : BackgroundService
             var cmd = JsonSerializer.Deserialize<Tile>(message);
             if (cmd == null) return;
 
-            _logger.LogInformation("Received ClaimTile ({Q},{R}) from {User}", cmd.Q, cmd.R, cmd.OwnerId);
+            _logger.LogInformation($"Received ClaimTile from {cmd.OwnerId}");
+
+            // Create a scope to access scoped services (DbContext, repository)
+            using var scope = _scopeFactory.CreateScope();
+            var tileRepo = scope.ServiceProvider.GetRequiredService<IRepository<Tile>>();
+            // Can do DB stuff here instead of the service -- For later maybe
 
             var changed = await _tileState.ClaimTileAsync(cmd.OwnerId, cmd.Color, cmd.Q, cmd.R, ct);
+            
             if (!changed) return;
 
             // ✅ Publish event to "game.events.tile.claimed"
-            await _producer.PublishAsync("game.events.tile.claimed", cmd, cancellationToken: ct);
-            _logger.LogInformation("Published TileClaimed ({Q},{R}) by {User}", cmd.Q, cmd.R, cmd.OwnerId);
+            await _producer.PublishTopicAsync("game.events.exchange","game.events.tile.claimed", cmd, cancellationToken: ct);
+            _logger.LogInformation($"Published TileClaimed by {cmd.OwnerId}");
 
         }
         catch (OperationCanceledException)

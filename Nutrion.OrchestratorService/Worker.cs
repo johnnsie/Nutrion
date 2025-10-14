@@ -91,7 +91,7 @@ public class Worker : BackgroundService
                     MessagesJson = JsonSerializer.Serialize(json)
                 };
 
-                await _producer.PublishAsync("openAI_reply", openRequest);
+                await _producer.PublishTopicAsync("openAI_reply","openAI_reply", openRequest);
             }
             else
             {

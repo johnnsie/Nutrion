@@ -1,5 +1,5 @@
-﻿using Nutrion.GameWorker.Persistence;
-using Nutrion.Lib.Database.Game.Entities;
+﻿using Nutrion.Lib.Database.Game.Entities;
+using Nutrion.Lib.Database.Game.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,16 +33,21 @@ public class TileStateService
 
         // Create a scope to access scoped services (DbContext, repository)
         using var scope = _scopeFactory.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<IEntityRepository>();
+        var repo = scope.ServiceProvider.GetRequiredService<IRepository<Tile>>();
 
-        await repo.SaveTileAsync(new Tile
-        {
-            Q = q,
-            R = r,
-            Color = color,
-            OwnerId = userId,
-            LastUpdated = DateTimeOffset.UtcNow
-        }, cancellationToken);
+        // Generic save handles both insert/update
+        await repo.SaveAsync(
+            entity: new Tile
+            {
+                Q = q,
+                R = r,
+                Color = color,
+                OwnerId = userId,
+                LastUpdated = DateTimeOffset.UtcNow
+            },
+            match: t => t.Q == q && t.R == r,
+            cancellationToken: cancellationToken
+        );
 
         _logger.LogInformation("Persisted tile ({Q},{R}) as {Color}", q, r, color);
         return true;

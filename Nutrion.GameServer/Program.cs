@@ -10,15 +10,13 @@ using Nutrion.Messaging;
 using System.Collections.Concurrent;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 builder.Services.AddSingleton<ColorAllocator>();
 
 builder.Services.AddSingleton<IRabbitMqConnectionProvider, RabbitMqConnectionProvider>();
 builder.Services.AddTransient<IMessageProducer, RabbitMqProducer>();
 builder.Services.AddTransient<IMessageConsumer, RabbitMqConsumer>();
-
-// ✅ register the allocator so DI can resolve it
-builder.Services.AddHostedService<GameEventConsumer>();
 
 // Add SignalR and enable MessagePack
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
@@ -33,12 +31,15 @@ builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
     });
 */
 
+// ✅ register the allocator so DI can resolve it
+builder.Services.AddHostedService<GameEventConsumer>();
+
 builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Debug);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
-builder.Services.AddScoped<IReadOnlyRepository, ReadOnlyRepository>();
+builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
 
 
 builder.Services.AddCors(options =>

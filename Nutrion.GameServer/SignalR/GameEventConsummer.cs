@@ -1,39 +1,30 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Nutrion.Contracts;
+using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Messaging;
+using System.Text;
 using System.Text.Json;
+using Player = Nutrion.Lib.Database.Game.Entities.Player;
+using Tile = Nutrion.Lib.Database.Game.Entities.Tile;
 
 namespace Nutrion.GameServer.SignalR;
 
 public class GameEventConsumer : BackgroundService
 {
-    private readonly IMessageConsumer _consumer;  // your RabbitMQ consumer abstraction
+    private readonly IMessageConsumer _consumer;
     private readonly IHubContext<GameHub> _hub;
     private readonly ILogger<GameEventConsumer> _logger;
-    private readonly Dictionary<string, Func<string, CancellationToken, Task>> _handlers;
 
-    public GameEventConsumer(IMessageConsumer consumer, IHubContext<GameHub> hub, ILogger<GameEventConsumer> logger)
+    private const string ExchangeName = "game.events.exchange";
+
+    public GameEventConsumer(
+        IMessageConsumer consumer,
+        IHubContext<GameHub> hub,
+        ILogger<GameEventConsumer> logger)
     {
         _consumer = consumer;
         _hub = hub;
         _logger = logger;
-
-        // Map routing keys to handler methods
-        _handlers = new()
-        {
-            ["game.events.tile.claimed"] = async (json, ct) =>
-            {
-                var evt = JsonSerializer.Deserialize<Tile>(json);
-                if (evt != null)
-                    await HandleTileClaimedAsync(evt, ct);
-            },
-            ["game.events.player.joined"] = async (json, ct) =>
-            {
-                var evt = JsonSerializer.Deserialize<Player>(json);
-                if (evt != null)
-                    await HandlePlayerJoinedAsync(evt, ct);
-            }
-        };
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -42,18 +33,23 @@ public class GameEventConsumer : BackgroundService
 
         try
         {
-            // Subscribe to all events under game.events.*
-            await _consumer.StartConsumingAsync("game.events.#", async (routingKey, body, ct) =>
-            {
-                await HandleMessageAsync(routingKey, body, ct);
-            }, stoppingToken);
+            // 🧩 Subscribe to all topic patterns under the exchange
+            await _consumer.StartConsumingTopicAsync(
+                exchangeName: ExchangeName,
+                topicPattern: "game.events.#",
+                onMessage: async (routingKey, body, ct) =>
+                {
+                    await HandleMessageAsync(routingKey, body, ct);
+                },
+                cancellationToken: stoppingToken,
+                queueName: "game.events.ui");
 
-            // Keep the background service alive until cancellation
+
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("🛑 GameEventConsumer canceled.");
+            _logger.LogInformation("🛑 GameEventConsumer canceled.");
         }
         catch (Exception ex)
         {
@@ -63,35 +59,60 @@ public class GameEventConsumer : BackgroundService
 
     private async Task HandleMessageAsync(string routingKey, ReadOnlyMemory<byte> body, CancellationToken ct)
     {
+        var json = Encoding.UTF8.GetString(body.Span);
+        _logger.LogInformation("📨 Received {RoutingKey}: {Json}", routingKey, json);
+
         try
         {
-            var json = System.Text.Encoding.UTF8.GetString(body.Span);
-            _logger.LogInformation("📨 Received {RoutingKey}: {Json}", routingKey, json);
+            switch (routingKey)
+            {
+                case "game.events.tile.claimed":
+                    await HandleTileClaimedAsync(json, ct);
+                    break;
 
-            if (_handlers.TryGetValue(routingKey, out var handler))
-            {
-                await handler(json, ct);
-            }
-            else
-            {
-                _logger.LogWarning("⚠️ No handler for {RoutingKey}", routingKey);
+                case "game.events.player.joined":
+                    await HandlePlayerJoinedAsync(json, ct);
+                    break;
+
+                default:
+                    _logger.LogWarning("⚠️ No handler for routing key {RoutingKey}", routingKey);
+                    break;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing message for {RoutingKey}", routingKey);
+            _logger.LogError(ex, "❌ Error processing message {RoutingKey}", routingKey);
         }
     }
 
-    private async Task HandleTileClaimedAsync(Tile message, CancellationToken ct)
+    private async Task HandleTileClaimedAsync(string json, CancellationToken ct)
     {
-        _logger.LogInformation("➡️ Broadcasting TileClaimed({q},{r}) by {color}", message.q, message.r, message.color);
-        await _hub.Clients.All.SendAsync("TileClaimed", message, ct);
+        var tile = JsonSerializer.Deserialize<Tile>(json, _jsonOpts);
+        if (tile == null)
+        {
+            _logger.LogWarning("⚠️ Invalid tile event JSON: {Json}", json);
+            return;
+        }
+
+        _logger.LogInformation("➡️ Broadcasting TileClaimed ({Q},{R}) by {Color}", tile.Q, tile.R, tile.Color);
+        await _hub.Clients.All.SendAsync("TileClaimed", tile, ct);
     }
 
-    private async Task HandlePlayerJoinedAsync(Player evt, CancellationToken ct)
+    private async Task HandlePlayerJoinedAsync(string json, CancellationToken ct)
     {
-        _logger.LogInformation("➡️ Broadcasting PlayerJoined: {name}", evt.Name);
-        await _hub.Clients.All.SendAsync("UserJoined", evt, new { evt.Id, evt.Color });
+        var player = JsonSerializer.Deserialize<Player>(json, _jsonOpts);
+        if (player == null)
+        {
+            _logger.LogWarning("⚠️ Invalid player event JSON: {Json}", json);
+            return;
+        }
+
+        _logger.LogInformation("➡️ Broadcasting PlayerJoined: {Name}", player.Name);
+        await _hub.Clients.All.SendAsync("UserJoined", new { player.Id, player.Color }, ct);
     }
+
+    private static readonly JsonSerializerOptions _jsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 }
