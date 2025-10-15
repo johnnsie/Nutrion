@@ -17,6 +17,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 // game systems
 builder.Services.AddScoped<ResourceSystem>();
 builder.Services.AddScoped<PlayerSystem>();
+builder.Services.AddScoped<EntityRepository>();
 
 builder.Services.AddHostedService<GameTickService>();
 

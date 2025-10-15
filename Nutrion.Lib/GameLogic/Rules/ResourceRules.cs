@@ -18,9 +18,9 @@ public static class ResourceRules
     // Define hard caps for each resource
     public static readonly Dictionary<string, int> MaxQuantities = new()
     {
-        ["Gold"] = 5000,
-        ["Wood"] = 2000,
-        ["Stone"] = 2000
+        ["Gold"] = 1000000000,
+        ["Wood"] = 1000000000,
+        ["Stone"] = 1000000000
     };
 
     // Fun: define special bonuses

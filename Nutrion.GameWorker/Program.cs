@@ -15,8 +15,6 @@ var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(postgresConnection));
 
-//builder.Services.AddScoped<IRepository<Tile>, Repository<Tile>>();
-//builder.Services.AddScoped<IRepository<Player>, Repository<Player>>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<EntityRepository>();
 

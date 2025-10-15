@@ -15,7 +15,7 @@ public class GameTickService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<GameTickService> _logger;
 
-    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(10);
 
     public GameTickService(IServiceScopeFactory scopeFactory, ILogger<GameTickService> logger)
     {

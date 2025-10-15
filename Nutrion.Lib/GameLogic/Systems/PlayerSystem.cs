@@ -8,24 +8,22 @@ namespace Nutrion.Lib.GameLogic.Systems;
 public class PlayerSystem
 {
     private readonly ILogger<PlayerSystem> _logger;
-    private readonly IRepository<Player> _playerRepository;
-    private readonly IRepository<Account> _accountRepository;
+    private readonly EntityRepository _repo;
+
 
     public PlayerSystem(
         ILogger<PlayerSystem> logger,
-        IRepository<Player> playerRepository,
-        IRepository<Account> accountRepository)
+        EntityRepository repo)
     {
         _logger = logger;
-        _playerRepository = playerRepository;
-        _accountRepository = accountRepository;
+        _repo = repo;
     }
 
     public async Task<Player> GetOrCreateAsync(Player player, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("🔍 Checking if player with OwnerId '{OwnerId}' exists...", player.OwnerId);
 
-        var existingPlayer = await _playerRepository.GetAsync(p => p.Name == player.Name, cancellationToken);
+        var existingPlayer = await _repo.Players.GetAsync(p => p.Name == player.Name, cancellationToken);
         if (existingPlayer != null)
         {
             _logger.LogInformation("✅ Found existing player '{PlayerName}' (OwnerId: {OwnerId})",
@@ -59,7 +57,7 @@ public class PlayerSystem
         _logger.LogDebug("💰 Initialized Account with {ResourceCount} default resources for player '{PlayerName}'.",
             account.Resources.Count, newPlayer.Name);
 
-        await _accountRepository.SaveAsync(account, a => a.Player.OwnerId == player.OwnerId, cancellationToken);
+        await _repo.Accounts.SaveAsync(account, a => a.Player.OwnerId == player.OwnerId, cancellationToken);
 
         _logger.LogInformation("🎉 Created new account and player successfully for OwnerId '{OwnerId}'", player.OwnerId);
 
