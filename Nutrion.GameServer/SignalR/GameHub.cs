@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Lib.Database.Game.Hydration;
+using Nutrion.Lib.Messaging.DTO;
 using Nutrion.Messaging;
 using System;
 using System.Collections.Concurrent;
@@ -67,6 +68,40 @@ public class GameHub : Hub
                     OwnerId = session.Id, 
                     Q = q, 
                     R = r });
+
+            Console.WriteLine($"📤 published claim ({q},{r})");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Hub error: {ex}");
+            throw;
+        }
+    }
+
+    public async Task BuildOnTile(string buildingType, int q, int r)
+    {
+        try
+        {
+            if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
+                return;
+
+            var command = new BuildTileCommand
+            {
+                OwnerId = session.Id,
+                BuildingType = buildingType,
+                Q = q,
+                R = r,
+                GLTFComponent = "building.glb"
+            };
+
+            var message = new GameCommandMessage<BuildTileCommand>
+            {
+                Type = "tile.build",
+                Payload = command
+            };
+
+            await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.build", message);
+
 
             Console.WriteLine($"📤 published claim ({q},{r})");
         }

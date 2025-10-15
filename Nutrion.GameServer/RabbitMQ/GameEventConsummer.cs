@@ -35,13 +35,15 @@ public class GameEventConsumer : BackgroundService
             await _consumer.StartConsumingTopicAsync(
                 exchangeName: ExchangeName,
                 topicPattern: "game.events.#",
-                onMessage: async (routingKey, body, ct) =>
+                onMessageWithResult: async (routingKey, body, ct) =>
                 {
                     // 🔸 Create a scoped lifetime for each message
                     using var scope = _scopeFactory.CreateScope();
                     var notifier = scope.ServiceProvider.GetRequiredService<GameHubNotifier>();
 
                     await HandleMessageAsync(notifier, routingKey, body, ct);
+
+                    return MessageResult.Ack;
                 },
                 cancellationToken: stoppingToken,
                 queueName: "game.events.ui");
@@ -74,7 +76,13 @@ public class GameEventConsumer : BackgroundService
                     else
                         _logger.LogWarning("⚠️ Invalid tile event JSON: {Json}", json);
                     break;
-
+                case "game.events.tile.built":
+                    var tileContent = JsonSerializer.Deserialize<TileContent>(json, _jsonOpts);
+                    if (tileContent != null)
+                        await notifier.BroadcastTileBuiltAsync(tileContent, ct);
+                    else
+                        _logger.LogWarning("⚠️ Invalid tile event JSON: {Json}", json);
+                    break;
                 case "game.events.player.joined":
                     var player = JsonSerializer.Deserialize<Player>(json, _jsonOpts);
                     if (player != null)

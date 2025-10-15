@@ -10,7 +10,6 @@ namespace Nutrion.GameServer.Worker;
 public abstract class MessageWorkerBase<TMessage> : BackgroundService
 {
     private readonly ILogger _logger;
-    private readonly IMessageProducer _producer;
     private readonly IMessageConsumer _consumer;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly string _exchange;
@@ -27,7 +26,6 @@ public abstract class MessageWorkerBase<TMessage> : BackgroundService
         string queueName)
     {
         _logger = logger;
-        _producer = producer;
         _consumer = consumer;
         _scopeFactory = scopeFactory;
         _exchange = exchange;
@@ -35,7 +33,7 @@ public abstract class MessageWorkerBase<TMessage> : BackgroundService
         _queueName = queueName;
     }
 
-    protected abstract Task HandleMessageAsync(TMessage message, IServiceScope scope, CancellationToken ct);
+    protected abstract Task<MessageResult> HandleMessageAsync(TMessage message, IServiceScope scope, CancellationToken ct);
 
     protected virtual Task OnBeforeConsumeAsync(CancellationToken ct) => Task.CompletedTask;
 
@@ -55,11 +53,25 @@ public abstract class MessageWorkerBase<TMessage> : BackgroundService
                     if (message == null)
                     {
                         _logger.LogWarning("Invalid message for {Worker}", GetType().Name);
-                        return;
+                        return MessageResult.NackDrop;
                     }
 
                     using var scope = _scopeFactory.CreateScope();
-                    await HandleMessageAsync(message, scope, ct);
+
+                    MessageResult result;
+                    try
+                    {
+                        result = await HandleMessageAsync(message, scope, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Error handling message in {Worker}", GetType().Name);
+                        result = MessageResult.NackRequeue;
+                    }
+
+                    return result;
+
+
                 },
                 stoppingToken,
                 queueName: _queueName

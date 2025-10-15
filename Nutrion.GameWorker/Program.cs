@@ -23,6 +23,7 @@ builder.Services.AddScoped<TileSystem>();
 
 builder.Services.AddHostedService<TileWorker>();
 builder.Services.AddHostedService<PlayerWorker>();
+builder.Services.AddHostedService<BuildWorker>();
 
 builder.Services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationHostedService>();

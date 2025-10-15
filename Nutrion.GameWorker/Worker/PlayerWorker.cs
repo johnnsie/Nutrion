@@ -25,7 +25,7 @@ public class PlayerWorker : MessageWorkerBase<Player>
         _logger = logger;
     }
 
-    protected override async Task HandleMessageAsync(Player player, IServiceScope scope, CancellationToken ct)
+    protected override async Task<MessageResult> HandleMessageAsync(Player player, IServiceScope scope, CancellationToken ct)
     {
         var playerSystem = scope.ServiceProvider.GetRequiredService<PlayerSystem>();
 
@@ -38,5 +38,7 @@ public class PlayerWorker : MessageWorkerBase<Player>
             cancellationToken: ct);
 
         _logger.LogInformation("Player {User} joined", newplayer.Name);
+
+        return MessageResult.Ack;
     }
 }

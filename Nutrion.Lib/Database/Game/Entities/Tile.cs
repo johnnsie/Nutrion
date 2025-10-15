@@ -27,4 +27,7 @@ public class Tile
     public string Color { get; set; } = string.Empty;
 
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+
+    public ICollection<TileContent> Contents { get; set; } = new List<TileContent>();
+
 }

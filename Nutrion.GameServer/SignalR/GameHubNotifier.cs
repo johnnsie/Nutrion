@@ -62,10 +62,15 @@ public class GameHubNotifier
         Console.WriteLine($"📡 Broadcasting TileClaimed ({tile.Q},{tile.R}) by {tile.Color}");
         return _hub.Clients.All.SendAsync("TileClaimed", tile, ct);
     }
-
+    
     public Task BroadcastPlayerJoinedAsync(Player player, CancellationToken ct = default)
     {
         Console.WriteLine($"📡 Broadcasting PlayerJoined: {player.Name}");
         return _hub.Clients.All.SendAsync("UserJoined", player, ct);
+    }
+    public Task BroadcastTileBuiltAsync(TileContent tileContent, CancellationToken ct = default)
+    {
+        Console.WriteLine($"📡 Broadcasting TileContent: {tileContent.GLTFComponent}");
+        return _hub.Clients.All.SendAsync("TileBuilt", tileContent, ct);
     }
 }

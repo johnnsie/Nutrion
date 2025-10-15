@@ -11,10 +11,18 @@ public interface IMessageConsumer : IAsyncDisposable
     Task StartConsumingTopicAsync(
         string exchangeName,
         string topicPattern,
-        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task> onMessage,
+        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task<MessageResult>> onMessageWithResult,
         CancellationToken cancellationToken = default,
         string? queueName = null);
 }
+
+public enum MessageResult
+{
+    Ack,
+    NackRequeue,
+    NackDrop
+}
+
 
 public class RabbitMqConsumer : IMessageConsumer
 {
@@ -33,7 +41,7 @@ public class RabbitMqConsumer : IMessageConsumer
     public async Task StartConsumingTopicAsync(
         string exchangeName,
         string topicPattern,
-        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task> onMessage,
+        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task<MessageResult>> onMessageWithResult,
         CancellationToken cancellationToken = default,
         string? queueName = null)
     {
@@ -71,14 +79,7 @@ public class RabbitMqConsumer : IMessageConsumer
             {
                 try
                 {
-                    var routingKey = ea.RoutingKey;
-                    var body = ea.Body;
-                    var message = Encoding.UTF8.GetString(body.Span);
-
-                    _logger.LogInformation("📨 Received from {RoutingKey}: {Message}", routingKey, message);
-
-                    await onMessage(routingKey, body, cancellationToken);
-                    await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                    await HandleMessageAsync(ea, onMessageWithResult, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -94,6 +95,50 @@ public class RabbitMqConsumer : IMessageConsumer
 
         _consumerTag = await _channel.BasicConsumeAsync(queue: queue, autoAck: false, consumer: consumer);
         _logger.LogInformation("🐇 Listening on queue {Queue} (exchange={Exchange}, pattern='{Pattern}')", queue, exchangeName, topicPattern);
+    }
+
+    /// <summary>
+    /// Handles a single message including acknowledgment or requeue logic.
+    /// </summary>
+    private async Task HandleMessageAsync(
+        BasicDeliverEventArgs ea,
+        Func<string, ReadOnlyMemory<byte>, CancellationToken, Task<MessageResult>> onMessage,
+        CancellationToken cancellationToken)
+    {
+        if (_channel == null)
+            throw new InvalidOperationException("Channel not initialized");
+
+        var routingKey = ea.RoutingKey;
+        var body = ea.Body;
+        var message = Encoding.UTF8.GetString(body.Span);
+
+        _logger.LogInformation("📨 Received from {RoutingKey}: {Message}", routingKey, message);
+
+        MessageResult result;
+        try
+        {
+            result = await onMessage(routingKey, body, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error in message handler — requeueing message");
+            result = MessageResult.NackRequeue;
+        }
+
+        switch (result)
+        {
+            case MessageResult.Ack:
+                await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                break;
+
+            case MessageResult.NackRequeue:
+                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+                break;
+
+            case MessageResult.NackDrop:
+                await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                break;
+        }
     }
 
     public async ValueTask DisposeAsync()

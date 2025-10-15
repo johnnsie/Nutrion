@@ -26,7 +26,7 @@ public class TileWorker : MessageWorkerBase<Tile>
         _logger = logger;
     }
 
-    protected override async Task HandleMessageAsync(Tile tile, IServiceScope scope, CancellationToken ct)
+    protected override async Task<MessageResult> HandleMessageAsync(Tile tile, IServiceScope scope, CancellationToken ct)
     {
         _logger.LogInformation("📩 Received ClaimTile request from {OwnerId} for tile ({Q},{R})",
             tile.OwnerId, tile.Q, tile.R);
@@ -40,18 +40,8 @@ public class TileWorker : MessageWorkerBase<Tile>
         if (updatedTile == null)
         {
             _logger.LogWarning("⚠️ ClaimTileAsync returned null for tile ({Q},{R})", tile.Q, tile.R);
-            return;
+            return MessageResult.Ack;
         }
-
-        /*
-        // 2️⃣ Compare original vs new owner
-        if (previousOwner == updatedTile.OwnerId)
-        {
-            _logger.LogDebug("ℹ️ Tile ({Q},{R}) already owned by {OwnerId}, no change — skipping publish.",
-                tile.Q, tile.R, previousOwner);
-            return;
-        }
-        */
 
         // 3️⃣ Publish event since ownership actually changed
         await _producer.PublishTopicAsync(
@@ -62,6 +52,9 @@ public class TileWorker : MessageWorkerBase<Tile>
 
         _logger.LogInformation("🎨 Tile ({Q},{R}) now owned by {OwnerId}. Event published.",
             updatedTile.Q, updatedTile.R, updatedTile.OwnerId);
+
+        return MessageResult.Ack;
+
     }
 
 }

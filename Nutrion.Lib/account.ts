@@ -7,7 +7,7 @@ import { Player } from "./player";
 import { Resource } from "./resource";
 
 export class Account {
-    id: string = "08e91b82-2ce7-48bc-9ae7-b84ed608708c";
+    id: string = "d2a6a936-c266-4ab5-a25e-40f2c5e0dab7";
     player: Player;
     resources: Resource[] = [];
 }
