@@ -16,7 +16,9 @@ public class Player
     [JsonIgnore]
     public Guid Id { get; set; } = Guid.NewGuid();
     public string OwnerId { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
+
+    // Navigation back to color
+    public PlayerColor? PlayerColor { get; set; }
 }

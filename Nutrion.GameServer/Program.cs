@@ -3,6 +3,7 @@ using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Nutrion.GameServer;
+using Nutrion.GameServer.RabbitMQ;
 using Nutrion.GameServer.SignalR;
 using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Game.Hydration;
@@ -12,14 +13,14 @@ using System.Collections.Concurrent;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-builder.Services.AddSingleton<ColorAllocator>();
-
 builder.Services.AddSingleton<IRabbitMqConnectionProvider, RabbitMqConnectionProvider>();
 builder.Services.AddTransient<IMessageProducer, RabbitMqProducer>();
 builder.Services.AddTransient<IMessageConsumer, RabbitMqConsumer>();
 
 // Add SignalR and enable MessagePack
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
+builder.Services.AddScoped<GameHubNotifier>();
+
 /*
     .AddMessagePackProtocol(options =>
     {
@@ -33,6 +34,7 @@ builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
 
 // ✅ register the allocator so DI can resolve it
 builder.Services.AddHostedService<GameEventConsumer>();
+builder.Services.AddHostedService<SignalRShutdownService>();
 
 builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Debug);
 
@@ -41,7 +43,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
 builder.Services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>)); // ✅ Read repo
-
 
 builder.Services.AddCors(options =>
 {

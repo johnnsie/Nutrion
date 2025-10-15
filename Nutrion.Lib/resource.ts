@@ -6,7 +6,7 @@
 import { Account } from "./account";
 
 export class Resource {
-    id: string = "bf1af017-e02d-41b4-b4e2-11589ed71ee0";
+    id: string = "0bb6dd9d-a430-4f70-ad15-3e0bb10a069b";
     name: string = "";
     quantity: number;
     description: string = "";

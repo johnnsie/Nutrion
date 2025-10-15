@@ -2,14 +2,13 @@
 using Microsoft.Extensions.Logging;
 using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Messaging;
-using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database.Game.Persistence;
+using Nutrion.Lib.GameLogic.Systems;
 
 namespace Nutrion.GameServer.Worker;
 
 public class TileWorker : MessageWorkerBase<Tile>
 {
-    private readonly TileStateService _tileState;
     private readonly IMessageProducer _producer;
     private readonly ILogger<TileWorker> _logger;
 
@@ -17,33 +16,52 @@ public class TileWorker : MessageWorkerBase<Tile>
         ILogger<TileWorker> logger,
         IMessageProducer producer,
         IMessageConsumer consumer,
-        TileStateService tileState,
         IServiceScopeFactory scopeFactory)
         : base(logger, producer, consumer, scopeFactory,
                exchange: "game.commands.exchange",
                topicPattern: "game.commands.tile.claim",
                queueName: "game.commands.tileworker")
     {
-        _tileState = tileState;
         _producer = producer;
         _logger = logger;
     }
 
-    protected override async Task HandleMessageAsync(Tile cmd, IServiceScope scope, CancellationToken ct)
+    protected override async Task HandleMessageAsync(Tile tile, IServiceScope scope, CancellationToken ct)
     {
-        _logger.LogInformation("Received ClaimTile from {Owner}", cmd.OwnerId);
+        _logger.LogInformation("📩 Received ClaimTile request from {OwnerId} for tile ({Q},{R})",
+            tile.OwnerId, tile.Q, tile.R);
 
-        var repo = scope.ServiceProvider.GetRequiredService<IRepository<Tile>>();
-        var changed = await _tileState.ClaimTileAsync(cmd.OwnerId, cmd.Color, cmd.Q, cmd.R, ct);
+        string previousOwner = tile.OwnerId;    
+        var tileSystem = scope.ServiceProvider.GetRequiredService<TileSystem>();
 
-        if (!changed) return;
+        // 1️⃣ Always process the claim
+        var updatedTile = await tileSystem.ClaimTileAsync(tile.OwnerId, tile, ct);
 
+        if (updatedTile == null)
+        {
+            _logger.LogWarning("⚠️ ClaimTileAsync returned null for tile ({Q},{R})", tile.Q, tile.R);
+            return;
+        }
+
+        /*
+        // 2️⃣ Compare original vs new owner
+        if (previousOwner == updatedTile.OwnerId)
+        {
+            _logger.LogDebug("ℹ️ Tile ({Q},{R}) already owned by {OwnerId}, no change — skipping publish.",
+                tile.Q, tile.R, previousOwner);
+            return;
+        }
+        */
+
+        // 3️⃣ Publish event since ownership actually changed
         await _producer.PublishTopicAsync(
             "game.events.exchange",
             "game.events.tile.claimed",
-            cmd,
+            updatedTile,
             cancellationToken: ct);
 
-        _logger.LogInformation("Tile claimed by {Owner}", cmd.OwnerId);
+        _logger.LogInformation("🎨 Tile ({Q},{R}) now owned by {OwnerId}. Event published.",
+            updatedTile.Q, updatedTile.R, updatedTile.OwnerId);
     }
+
 }

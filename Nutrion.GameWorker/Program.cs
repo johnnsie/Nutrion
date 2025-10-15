@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nutrion.GameServer.Worker;
 using Nutrion.GameWorker.Database;
-using Nutrion.GameWorker.Services;
 using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Lib.Database.Game.Persistence;
@@ -20,11 +19,10 @@ builder.Services.AddScoped<EntityRepository>();
 
 // register game logic systems
 builder.Services.AddScoped<PlayerSystem>();
+builder.Services.AddScoped<TileSystem>();
 
-builder.Services.AddSingleton<TileStateService>();
 builder.Services.AddHostedService<TileWorker>();
 builder.Services.AddHostedService<PlayerWorker>();
-
 
 builder.Services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationHostedService>();

@@ -23,15 +23,4 @@ public static class ResourceRules
         ["Stone"] = 1000000000
     };
 
-    // Fun: define special bonuses
-    public static int GetBonus(Player player)
-    {
-        // Just for flavor — color-coded multipliers
-        return player.Color switch
-        {
-            "#FFD700" => 2,  // gold players earn double gold
-            "#228B22" => 2,  // green players earn double wood
-            _ => 1
-        };
-    }
 }

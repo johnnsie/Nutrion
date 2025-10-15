@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrion.Lib.Database;
@@ -11,9 +12,11 @@ using Nutrion.Lib.Database;
 namespace Nutrion.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251015100935_SeedPlayerColors")]
+    partial class SeedPlayerColors
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,9 +109,6 @@ namespace Nutrion.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("PlayerId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Q")
                         .HasColumnType("integer");
 
@@ -116,8 +116,6 @@ namespace Nutrion.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PlayerId");
 
                     b.ToTable("Tile");
                 });
@@ -214,6 +212,43 @@ namespace Nutrion.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("PlayerColor");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            HexCode = "#FF5733"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            HexCode = "#33FF57"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            HexCode = "#3357FF"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            HexCode = "#FFD700"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            HexCode = "#FF69B4"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            HexCode = "#00CED1"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            HexCode = "#800080"
+                        });
                 });
 
             modelBuilder.Entity("Nutrion.Lib.Database.Game.Entities.Account", b =>
@@ -236,15 +271,6 @@ namespace Nutrion.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("Nutrion.Lib.Database.Game.Entities.Tile", b =>
-                {
-                    b.HasOne("Nutrion.Lib.Database.Game.Entities.Player", "Player")
-                        .WithMany()
-                        .HasForeignKey("PlayerId");
-
-                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("PlayerColor", b =>

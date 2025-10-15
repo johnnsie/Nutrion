@@ -4,10 +4,10 @@
  */
 
 import { Player } from "./player";
-import { Resource } from "./resource";
 
-export class Account {
-    id: string = "08e91b82-2ce7-48bc-9ae7-b84ed608708c";
+export class PlayerColor {
+    id: number;
+    hexCode: string;
+    playerId: string;
     player: Player;
-    resources: Resource[] = [];
 }

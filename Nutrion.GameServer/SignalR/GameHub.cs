@@ -12,19 +12,18 @@ namespace Nutrion.GameServer.SignalR;
 // -------------------
 //  Helpers / Classes
 // -------------------
+public record PlayerSession(string Id);
 
 public class GameHub : Hub
 {
-    private static readonly ConcurrentDictionary<string, PlayerSession> Sessions = new();
+    internal static readonly ConcurrentDictionary<string, PlayerSession> Sessions = new();
 
-    private readonly ColorAllocator _colors;
     private readonly IMessageProducer _bus;
     private readonly ITileReadRepository _tileRepo;
     private readonly IReadRepository<Account> _readRepo;
 
-    public GameHub(ColorAllocator colors, IMessageProducer bus, ITileReadRepository tileRepo, IReadRepository<Account> readRepo)
+    public GameHub(IMessageProducer bus, ITileReadRepository tileRepo, IReadRepository<Account> readRepo)
     {
-        _colors = colors;
         _bus = bus;
         _tileRepo = tileRepo;
         _readRepo = readRepo;
@@ -33,14 +32,12 @@ public class GameHub : Hub
     public override async Task OnConnectedAsync()
     {
         var id = Context.ConnectionId;
-        var color = _colors.AssignColor();
-
-        var session = new PlayerSession(id, color);
+        var session = new PlayerSession(id);
         Sessions[id] = session;
 
-        Console.WriteLine($"🟢 Connected: {id} color={color}");
+        Console.WriteLine($"🟢 Connected: {id}");
 
-        await Clients.Caller.SendAsync("Connected", new { id, color });
+        await Clients.Caller.SendAsync("Connected", new { id });
 
         var boardSecond = await _tileRepo.GetBoardAsync();
 
@@ -52,7 +49,6 @@ public class GameHub : Hub
     {
         if (Sessions.TryRemove(Context.ConnectionId, out var session))
         {
-            _colors.ReleaseColor(session.Color);
             Console.WriteLine($"🔴 Disconnected: {session.Id}");
             await Clients.All.SendAsync("UserLeft", new { id = session.Id });
         }
@@ -68,7 +64,6 @@ public class GameHub : Hub
 
             await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.claim", 
                 new Tile() {  
-                    Color = session.Color, 
                     OwnerId = session.Id, 
                     Q = q, 
                     R = r });
@@ -123,4 +118,3 @@ public class GameHub : Hub
 
 }
 
-public record PlayerSession(string Id, string Color);

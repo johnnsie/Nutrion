@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Player> Player { get; set; }
     public DbSet<Resource> Resource { get; set; }
     public DbSet<Tile> Tile { get; set; }
+    public DbSet<PlayerColor> PlayerColor { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -56,7 +56,7 @@ public class ResourceSystem
                 continue;
             }
 
-            var bonus = ResourceRules.GetBonus(player);
+            var bonus = 1;
             var gain = (int)(rate * delta.TotalMinutes * bonus);
 
             if (gain <= 0)

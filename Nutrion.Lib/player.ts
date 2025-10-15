@@ -3,10 +3,12 @@
  * Any changes made to this file can be lost when this file is regenerated.
  */
 
+import { PlayerColor } from "./player-color";
+
 export class Player {
-    id: string = "748d21e8-bdee-46b2-a025-87ea7b08076f";
+    id: string = "c9cd3feb-eaac-4db5-887e-2a1383a2d167";
     ownerId: string = "";
-    color: string = "";
     name: string = "";
-    lastUpdated: Date = new Date("2025-10-14T10:19:45.3546535+00:00");
+    lastUpdated: Date = new Date("2025-10-15T10:16:11.2204173+00:00");
+    playerColor: PlayerColor;
 }
