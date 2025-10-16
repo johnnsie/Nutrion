@@ -18,7 +18,6 @@ public class TileContent
     [ForeignKey(nameof(Tile))]
     public int TileId { get; set; }
 
-    [JsonIgnore] // 🚀 Prevent circular reference
     public Tile Tile { get; set; } = null!;
 
     /// <summary>

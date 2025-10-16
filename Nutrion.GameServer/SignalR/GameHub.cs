@@ -20,10 +20,10 @@ public class GameHub : Hub
     internal static readonly ConcurrentDictionary<string, PlayerSession> Sessions = new();
 
     private readonly IMessageProducer _bus;
-    private readonly ITileReadRepository _tileRepo;
+    private readonly IReadRepository<Tile> _tileRepo;
     private readonly IReadRepository<Account> _readRepo;
 
-    public GameHub(IMessageProducer bus, ITileReadRepository tileRepo, IReadRepository<Account> readRepo)
+    public GameHub(IMessageProducer bus, IReadRepository<Tile> tileRepo, IReadRepository<Account> readRepo)
     {
         _bus = bus;
         _tileRepo = tileRepo;
@@ -40,9 +40,10 @@ public class GameHub : Hub
 
         await Clients.Caller.SendAsync("Connected", new { id });
 
-        var boardSecond = await _tileRepo.GetBoardAsync();
+        var tiles = await _tileRepo.GetAllAsync(
+            include: q => q.Include(t => t.Contents));
 
-        await Clients.Caller.SendAsync("BoardState", boardSecond);
+        await Clients.Caller.SendAsync("BoardState", new Board(tiles));
 
     }
 
@@ -56,58 +57,31 @@ public class GameHub : Hub
         await base.OnDisconnectedAsync(ex);
     }
 
-    public async Task ClaimTile(int q, int r)
+    // --------------------------
+    // 📨 Generic Publish Method
+    // --------------------------
+    public async Task SendEvent(GameClientEvent message)
     {
+        if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
+            return;
+
+        if (string.IsNullOrWhiteSpace(message.Topic))
+        {
+            Console.WriteLine("⚠️ Missing topic field in Publish()");
+            return;
+        }
+
+        Console.WriteLine($"📤 [{session.Id}] Publishing topic '{message.Topic}'");
+
         try
         {
-            if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
-                return;
-
-            await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.claim", 
-                new Tile() {  
-                    OwnerId = session.Id, 
-                    Q = q, 
-                    R = r });
-
-            Console.WriteLine($"📤 published claim ({q},{r})");
+            message.OwnerSessionId = session.Id;
+            // Generic pass-through to message bus
+            await _bus.PublishTopicAsync("game.commands.exchange", message.Topic, message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"⚠️ Hub error: {ex}");
-            throw;
-        }
-    }
-
-    public async Task BuildOnTile(string buildingType, int q, int r)
-    {
-        try
-        {
-            if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
-                return;
-
-            var command = new BuildTileCommand
-            {
-                OwnerId = session.Id,
-                BuildingType = buildingType,
-                Q = q,
-                R = r,
-                GLTFComponent = "building.glb"
-            };
-
-            var message = new GameCommandMessage<BuildTileCommand>
-            {
-                Type = "tile.build",
-                Payload = command
-            };
-
-            await _bus.PublishTopicAsync("game.commands.exchange", "game.commands.tile.build", message);
-
-
-            Console.WriteLine($"📤 published claim ({q},{r})");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Hub error: {ex}");
+            Console.WriteLine($"⚠️ Hub publish error: {ex}");
             throw;
         }
     }
@@ -149,6 +123,7 @@ public class GameHub : Hub
 
         await Clients.Caller.SendAsync("AccountState", account);
     }
+
 
 
 }

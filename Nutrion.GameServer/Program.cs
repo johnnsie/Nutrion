@@ -9,6 +9,7 @@ using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Game.Hydration;
 using Nutrion.Messaging;
 using System.Collections.Concurrent;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.SetMinimumLevel(LogLevel.Information);
@@ -18,7 +19,12 @@ builder.Services.AddTransient<IMessageProducer, RabbitMqProducer>();
 builder.Services.AddTransient<IMessageConsumer, RabbitMqConsumer>();
 
 // Add SignalR and enable MessagePack
-builder.Services.AddSignalR(options => options.EnableDetailedErrors = true);
+builder.Services.AddSignalR(options => options.EnableDetailedErrors = true)
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+
 builder.Services.AddScoped<GameHubNotifier>();
 
 /*
@@ -41,7 +47,7 @@ builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Debug);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
-builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
+// builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
 builder.Services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>)); // ✅ Read repo
 
 builder.Services.AddCors(options =>

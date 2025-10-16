@@ -26,6 +26,13 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<OutboxMessage>()
             .HasIndex(o => new { o.ProcessedOn, o.Topic }); // For faster querying pending messages
+
+        modelBuilder.Entity<Tile>()
+            .HasMany(t => t.Contents)
+            .WithOne(c => c.Tile)
+            .HasForeignKey(c => c.TileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
     }
 }
 

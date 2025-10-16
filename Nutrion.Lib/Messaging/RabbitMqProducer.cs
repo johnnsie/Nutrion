@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Channels;
 
 namespace Nutrion.Messaging;
@@ -39,8 +40,13 @@ public class RabbitMqProducer : IMessageProducer
         // 1️⃣ Make sure the exchange exists
         await channel.ExchangeDeclareAsync(exchangeName, ExchangeType.Topic, durable: true);
 
+        var options = new JsonSerializerOptions
+        {
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            WriteIndented = false,
+        };
         // 2️⃣ Serialize body
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, options));
 
         // 3️⃣ Publish to topic exchange
         var props = new BasicProperties { Persistent = true };

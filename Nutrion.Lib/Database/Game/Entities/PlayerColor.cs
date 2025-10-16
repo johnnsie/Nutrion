@@ -18,6 +18,5 @@ public class PlayerColor
     [ForeignKey(nameof(Player))]
     public Guid? PlayerId { get; set; }   // nullable = available in palette
 
-    [JsonIgnore] // 🚀 Prevent circular reference
     public Player? Player { get; set; }   // navigation
 }

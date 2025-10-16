@@ -26,6 +26,5 @@ public class Resource
     [ForeignKey(nameof(AccountId))]
     public Guid AccountId { get; set; }
 
-    [JsonIgnore] // 🚀 Prevent circular reference
     public Account Account { get; set; } = null!;
 }
