@@ -57,7 +57,7 @@ public class ResourceSystem
             }
 
             var bonus = 1;
-            var gain = (int)(rate * delta.TotalMinutes * bonus);
+            var gain = (int)(rate * delta.TotalSeconds * bonus);
 
             if (gain <= 0)
             {

@@ -10,7 +10,6 @@ namespace Nutrion.Lib.Database.Game.Entities;
 public class TileContent
 {
     [Key]
-    [JsonIgnore]
     public Guid Id { get; set; } = Guid.NewGuid();
 
     // Foreign key to parent Tile
