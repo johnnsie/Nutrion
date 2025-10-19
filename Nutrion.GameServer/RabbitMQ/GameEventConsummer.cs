@@ -1,10 +1,10 @@
 ﻿using Nutrion.GameServer.SignalR;
-using Nutrion.Lib.Database.Game.Entities;
 using Nutrion.Messaging;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Nutrion.GameLib.Database.Entities;
 
 namespace Nutrion.GameServer.RabbitMQ;
 

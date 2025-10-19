@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Nutrion.GameLib\Nutrion.GameLib.csproj" />
     <ProjectReference Include="..\Nutrion.Lib\Nutrion.Lib.csproj" />
   </ItemGroup>
 </Project>

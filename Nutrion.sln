@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameWorker", "Nutri
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameEngine", "Nutrion.GameEngine\Nutrion.GameEngine.csproj", "{A0CAB751-F27C-4909-B524-490DE925C720}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nutrion.GameLib", "Nutrion.GameLib\Nutrion.GameLib.csproj", "{E1EC313B-F9DD-4945-9A93-28FCE17D6394}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{A0CAB751-F27C-4909-B524-490DE925C720}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0CAB751-F27C-4909-B524-490DE925C720}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0CAB751-F27C-4909-B524-490DE925C720}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1EC313B-F9DD-4945-9A93-28FCE17D6394}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1EC313B-F9DD-4945-9A93-28FCE17D6394}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1EC313B-F9DD-4945-9A93-28FCE17D6394}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1EC313B-F9DD-4945-9A93-28FCE17D6394}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Nutrion.Lib.Database.Game.Entities;
-using Nutrion.Lib.Database.Game.Hydration;
+using Nutrion.GameLib.Database.Entities;
+using Nutrion.GameLib.Database.EntityRepository;
+using Nutrion.Lib.Database.Hydration;
 using Nutrion.Lib.Messaging.DTO;
 using Nutrion.Messaging;
 using System;
@@ -23,7 +24,10 @@ public class GameHub : Hub
     private readonly IReadRepository<Tile> _tileRepo;
     private readonly IReadRepository<Account> _readRepo;
 
-    public GameHub(IMessageProducer bus, IReadRepository<Tile> tileRepo, IReadRepository<Account> readRepo)
+    public GameHub(
+        IMessageProducer bus,
+        IReadRepository<Tile> tileRepo, 
+        IReadRepository<Account> readRepo)
     {
         _bus = bus;
         _tileRepo = tileRepo;
@@ -108,7 +112,6 @@ public class GameHub : Hub
     public async Task GetAccount(string playerName)
     {
         var id = Context.ConnectionId;
-        //var color = _colors.AssignColor();
 
         Console.WriteLine($"🟢 GetAccount: {id} playerName={playerName}");
 
@@ -116,10 +119,12 @@ public class GameHub : Hub
         var account = await _readRepo.GetAsync(
             a => a.Player.Name == playerName,
             include: q => q.Include(a => a.Player)
+                           .ThenInclude(p => p.PlayerColor)
                            .Include(a => a.Resources)
         );
 
         Console.WriteLine($"🟢 HOW MANY : {account}");
+        Console.WriteLine($"🟢 my super color : {account.Player.PlayerColor.HexCode}");
 
         await Clients.Caller.SendAsync("AccountState", account);
     }

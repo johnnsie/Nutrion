@@ -2,11 +2,12 @@
 using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Nutrion.GameLib.Database;
 using Nutrion.GameServer;
 using Nutrion.GameServer.RabbitMQ;
 using Nutrion.GameServer.SignalR;
 using Nutrion.Lib.Database;
-using Nutrion.Lib.Database.Game.Hydration;
+using Nutrion.Lib.Database.Hydration;
 using Nutrion.Messaging;
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
@@ -46,6 +47,10 @@ builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Debug);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+
+// Map the interface abstraction to the EF context
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
 
 // builder.Services.AddScoped<ITileReadRepository, TileReadRepository>();
 builder.Services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<>)); // ✅ Read repo
