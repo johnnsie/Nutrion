@@ -1,18 +1,25 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Nutrion.GameLib.Database;
+using Nutrion.GameLib.Database.EntityRepository;
+using Nutrion.GameLib.Database.Init;
 using Nutrion.GameServer.Worker;
-using Nutrion.GameWorker.Database;
 using Nutrion.Lib.Database;
-using Nutrion.Lib.Database.Game.Entities;
-using Nutrion.Lib.Database.Game.Persistence;
+using Nutrion.Lib.Database.Hydration;
+using Nutrion.Lib.Database.Persistence;
 using Nutrion.Lib.GameLogic.Systems;
 using Nutrion.Messaging;
+using Nutrion.Worker.Tile;
 using System;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 var postgresConnection = builder.Configuration.GetConnectionString("Postgres");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(postgresConnection));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+
+// Register interface mapping
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<EntityRepository>();

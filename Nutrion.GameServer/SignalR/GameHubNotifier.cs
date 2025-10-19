@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Nutrion.Lib.Database.Game.Entities;
-using Nutrion.Lib.Database.Game.Hydration;
 using Microsoft.EntityFrameworkCore;
+using Nutrion.Lib.Database.Hydration;
+using Nutrion.GameLib.Database.Entities;
 
 namespace Nutrion.GameServer.SignalR;
 
