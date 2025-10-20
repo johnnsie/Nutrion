@@ -12,13 +12,15 @@ public class AppDbContext : DbContext, IAppDbContext
         : base(options) { }
 
     public DbSet<OutboxMessage> OutboxMessage { get; set; }
-    public DbSet<OpenAIRequest> OpenAIRequest { get; set; }
     public DbSet<Account> Account { get; set; }
     public DbSet<Player> Player { get; set; }
     public DbSet<Resource> Resource { get; set; }
     public DbSet<Tile> Tile { get; set; }
     public DbSet<PlayerColor> PlayerColor { get; set; }
     public DbSet<TileContent> TileContent { get; set; }
+    public DbSet<Building> Building { get; set; }
+    public DbSet<BuildingType> BuildingType { get; set; }
+    public DbSet<BuildingCost> BuildingCost { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -33,6 +35,19 @@ public class AppDbContext : DbContext, IAppDbContext
             .WithOne(c => c.Tile)
             .HasForeignKey(c => c.TileId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Building → OriginTile (1:1)
+        modelBuilder.Entity<Building>()
+            .HasOne(b => b.OriginTile)
+            .WithMany()
+            .HasForeignKey(b => b.OriginTileId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Building → OccupiedTiles (1:many)
+        modelBuilder.Entity<Building>()
+            .HasMany(b => b.OccupiedTiles)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Restrict);
 
     }
 }
@@ -64,49 +79,4 @@ public class OutboxMessage
     public string? Error { get; init; }
 }
 
-public enum MessageStatus {
-    Init,
-    InProgress,
-    Processed,
-    Failed
-}
-
-public class OpenAIRequest
-{
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-
-    public MessageStatus Status { get; set; } = MessageStatus.Init;
-
-    public string Model { get; set; } = string.Empty;
-
-    // JSON blob of the messages array
-    public string MessagesJson { get; set; } = string.Empty;
-
-    public string ReplyMessage { get; set; } = string.Empty;
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-}
-
-
-public class MealPlanRequest
-{
-    public string Style { get; set; } = string.Empty;
-    public int MealsPerDay { get; set; }
-    public int NumPeople { get; set; }
-}
-
-public class CustomiseMealPlanRequest : MealPlanRequest
-{
-    public List<string> AdditionalFood { get; set; } = new();
-    public List<string> RemoveFood { get; set; } = new();
-    public string? OriginalMealPlanJson { get; set; } // Holds the initial full meal plan JSON
-}
-
-public class RecipePromptTemplate
-{
-    public string? Title { get; set; }
-    public string? BaseTemplate { get; set; }
-}
 

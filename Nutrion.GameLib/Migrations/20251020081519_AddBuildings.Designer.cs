@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrion.GameLib.Database;
@@ -11,9 +12,11 @@ using Nutrion.GameLib.Database;
 namespace Nutrion.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251020081519_AddBuildings")]
+    partial class AddBuildings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,17 +57,12 @@ namespace Nutrion.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("OriginTileId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("PlayerOwnerId")
+                    b.Property<Guid>("PlayerOwnerId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BuildingTypeId");
-
-                    b.HasIndex("OriginTileId");
 
                     b.HasIndex("PlayerOwnerId");
 
@@ -97,20 +95,9 @@ namespace Nutrion.Data.Migrations
                     b.Property<Guid?>("BuildingCostId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("GLTFModelPath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("TileRadius")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -173,7 +160,7 @@ namespace Nutrion.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AccountId")
+                    b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("BuildingCostId")
@@ -188,9 +175,6 @@ namespace Nutrion.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ResourceType")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -209,9 +193,6 @@ namespace Nutrion.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<Guid?>("BuildingId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Color")
                         .IsRequired()
@@ -234,8 +215,6 @@ namespace Nutrion.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BuildingId");
 
                     b.HasIndex("PlayerId");
 
@@ -337,19 +316,13 @@ namespace Nutrion.Data.Migrations
                         .WithMany()
                         .HasForeignKey("BuildingTypeId");
 
-                    b.HasOne("Nutrion.GameLib.Database.Entities.Tile", "OriginTile")
-                        .WithMany()
-                        .HasForeignKey("OriginTileId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Nutrion.GameLib.Database.Entities.Player", "PlayerOwner")
                         .WithMany()
-                        .HasForeignKey("PlayerOwnerId");
+                        .HasForeignKey("PlayerOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("BuildingType");
-
-                    b.Navigation("OriginTile");
 
                     b.Navigation("PlayerOwner");
                 });
@@ -376,7 +349,9 @@ namespace Nutrion.Data.Migrations
                 {
                     b.HasOne("Nutrion.GameLib.Database.Entities.Account", "Account")
                         .WithMany("Resources")
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Nutrion.GameLib.Database.Entities.BuildingCost", "BuildingCost")
                         .WithMany("RssImpact")
@@ -389,11 +364,6 @@ namespace Nutrion.Data.Migrations
 
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Tile", b =>
                 {
-                    b.HasOne("Nutrion.GameLib.Database.Entities.Building", null)
-                        .WithMany("OccupiedTiles")
-                        .HasForeignKey("BuildingId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Nutrion.GameLib.Database.Entities.Player", "Player")
                         .WithMany()
                         .HasForeignKey("PlayerId");
@@ -415,11 +385,6 @@ namespace Nutrion.Data.Migrations
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Account", b =>
                 {
                     b.Navigation("Resources");
-                });
-
-            modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Building", b =>
-                {
-                    b.Navigation("OccupiedTiles");
                 });
 
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.BuildingCost", b =>

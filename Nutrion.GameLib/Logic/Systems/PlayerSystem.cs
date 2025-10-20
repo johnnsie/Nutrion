@@ -74,9 +74,11 @@ public class PlayerSystem
                 Player = newPlayer,
                 Resources = new List<Resource>
                 {
-                    new Resource { Name = "Gold", Quantity = 100, Description = "Basic currency" },
-                    new Resource { Name = "Wood", Quantity = 50, Description = "Building material" },
-                    new Resource { Name = "Stone", Quantity = 50, Description = "Construction resource" }
+                    new Resource { Name = "Energy", Quantity = 99999 },
+                    new Resource { Name = "Metal", Quantity = 999999 },
+                    new Resource { Name = "Fuel", Quantity = 999999 },
+                    new Resource { Name = "Population", Quantity = 99999 },
+                    new Resource { Name = "Food", Quantity = 99999 },
                 }
             };
 

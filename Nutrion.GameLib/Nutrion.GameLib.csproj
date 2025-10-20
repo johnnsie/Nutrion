@@ -20,4 +20,8 @@
     <ProjectReference Include="..\Nutrion.Lib\Nutrion.Lib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TypeScript\" />
+  </ItemGroup>
+
 </Project>

@@ -83,6 +83,13 @@ public class GameEventConsumer : BackgroundService
                     else
                         _logger.LogWarning("⚠️ Invalid tile event JSON: {Json}", json);
                     break;
+                case "game.events.building.built":
+                    var newBuilding = JsonSerializer.Deserialize<Building>(json, _jsonOpts);
+                    if (newBuilding != null)
+                        await notifier.BroadcastBuildingBuiltAsync(newBuilding, ct);
+                    else
+                        _logger.LogWarning("⚠️ Invalid tile event JSON: {Json}", json);
+                    break;
                 case "game.events.player.joined":
                     var player = JsonSerializer.Deserialize<Player>(json, _jsonOpts);
                     if (player != null)

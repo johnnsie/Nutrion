@@ -6,9 +6,11 @@ using Nutrion.GameServer.Worker;
 using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Hydration;
 using Nutrion.Lib.Database.Persistence;
+using Nutrion.Lib.GameLogic.Helpers;
+using Nutrion.Lib.GameLogic.Rules;
 using Nutrion.Lib.GameLogic.Systems;
+using Nutrion.Lib.GameLogic.Validation;
 using Nutrion.Messaging;
-using Nutrion.Worker.Tile;
 using System;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -27,10 +29,13 @@ builder.Services.AddScoped<EntityRepository>();
 // register game logic systems
 builder.Services.AddScoped<PlayerSystem>();
 builder.Services.AddScoped<TileSystem>();
+builder.Services.AddScoped<BuildingValidator>();
+builder.Services.AddScoped<BuildingSystem>();
+
 
 builder.Services.AddHostedService<TileWorker>();
 builder.Services.AddHostedService<PlayerWorker>();
-//builder.Services.AddHostedService<BuildWorker>();
+builder.Services.AddHostedService<BuildingWorker>();
 
 builder.Services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
 builder.Services.AddHostedService<DatabaseMigrationHostedService>();

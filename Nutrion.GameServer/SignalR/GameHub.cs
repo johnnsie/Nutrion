@@ -23,15 +23,22 @@ public class GameHub : Hub
     private readonly IMessageProducer _bus;
     private readonly IReadRepository<Tile> _tileRepo;
     private readonly IReadRepository<Account> _readRepo;
+    private readonly IReadRepository<Building> _buildingRepo;
+    private readonly IReadRepository<BuildingType> _buildingTypeRepo;
 
     public GameHub(
         IMessageProducer bus,
         IReadRepository<Tile> tileRepo, 
-        IReadRepository<Account> readRepo)
+        IReadRepository<Account> readRepo,
+        IReadRepository<Building> buildingRepo,
+        IReadRepository<BuildingType> buildingTypeRepo
+        )
     {
         _bus = bus;
         _tileRepo = tileRepo;
         _readRepo = readRepo;
+        _buildingRepo = buildingRepo;
+        _buildingTypeRepo = buildingTypeRepo;
     }
 
     public override async Task OnConnectedAsync()
@@ -66,6 +73,8 @@ public class GameHub : Hub
     // --------------------------
     public async Task SendEvent(GameClientEvent message)
     {
+        Console.WriteLine("📨 SendEvent called", message.Payload);
+
         if (!Sessions.TryGetValue(Context.ConnectionId, out var session))
             return;
 
@@ -89,6 +98,29 @@ public class GameHub : Hub
             throw;
         }
     }
+
+    public async Task<object> GetData(GameClientEvent request)
+    {
+        switch (request.Topic)
+        {
+            case "game.commands.get.buildingtypes":
+                return await _buildingTypeRepo.GetAllAsync(
+                            include: q => q.Include(bt => bt.BuildingCost)
+                                            .ThenInclude(bc => bc.RssImpact)
+                        );
+            case "game.commands.get.buildings":
+                return await _buildingRepo.GetAllAsync(
+                            include: q => q.Include(b => b.PlayerOwner)
+                                           .ThenInclude(p => p.PlayerColor)
+                                           .Include(b => b.BuildingType)
+                                               .ThenInclude(bt => bt.BuildingCost)
+                                                   .ThenInclude(bc => bc.RssImpact)
+                        );
+            default:
+                throw new Exception($"Unknown topic: {request.Topic}");
+        }
+    }
+
 
     public async Task JoinGame(string playerName)
     {

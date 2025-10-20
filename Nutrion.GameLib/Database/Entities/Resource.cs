@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.Json.Serialization;
 using TypeGen.Core.TypeAnnotations;
@@ -22,9 +23,21 @@ public class Resource
 
     public string Description { get; set; } = string.Empty;
 
-    // Foreign key to Account
     [ForeignKey(nameof(AccountId))]
-    public Guid AccountId { get; set; }
+    public Guid? AccountId { get; set; }
+    public Account? Account { get; set; } = null!;
 
-    public Account Account { get; set; } = null!;
+    [ForeignKey(nameof(BuildingCostId))]
+    public Guid? BuildingCostId { get; set; }
+    public BuildingCost? BuildingCost { get; set; }
+
+    public ResourceType ResourceType { get; set; } = ResourceType.Generic;
+}
+
+
+public enum ResourceType
+{
+    Generic = 0,   // fallback
+    Account = 1,   // belongs to player
+    BuildingCost = 2  // used as cost template
 }

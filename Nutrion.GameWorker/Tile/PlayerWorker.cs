@@ -5,7 +5,7 @@ using Nutrion.GameServer.Worker;
 using Nutrion.Lib.GameLogic.Systems;
 using Nutrion.Messaging;
 
-namespace Nutrion.Worker.Tile;
+namespace Nutrion.GameServer.Worker;
 
 public class PlayerWorker : MessageWorkerBase<Player>
 {

@@ -73,4 +73,9 @@ public class GameHubNotifier
         Console.WriteLine($"📡 Broadcasting TileContent: {tileContent.GLTFComponent}");
         return _hub.Clients.All.SendAsync("TileBuilt", tileContent, ct);
     }
+    public Task BroadcastBuildingBuiltAsync(Building building, CancellationToken ct = default)
+    {
+        Console.WriteLine($"📡 Broadcasting TileContent: {building.BuildingType}");
+        return _hub.Clients.All.SendAsync("BuildingBuilt", building, ct);
+    }
 }
