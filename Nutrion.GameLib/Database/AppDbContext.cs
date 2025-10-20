@@ -16,7 +16,7 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<Player> Player { get; set; }
     public DbSet<Resource> Resource { get; set; }
     public DbSet<Tile> Tile { get; set; }
-    public DbSet<PlayerColor> PlayerColor { get; set; }
+    public DbSet<Color> Color { get; set; }
     public DbSet<TileContent> TileContent { get; set; }
     public DbSet<Building> Building { get; set; }
     public DbSet<BuildingType> BuildingType { get; set; }
@@ -48,6 +48,13 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasMany(b => b.OccupiedTiles)
             .WithOne()
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Player>()
+            .HasOne(p => p.Color)
+            .WithOne(c => c.Player)
+            .HasForeignKey<Player>(p => p.ColorId)
+            .OnDelete(DeleteBehavior.Cascade);
+
 
     }
 }

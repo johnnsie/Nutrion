@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrion.GameLib.Database;
@@ -11,9 +12,11 @@ using Nutrion.GameLib.Database;
 namespace Nutrion.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251020151244_PlayerUpgrade124")]
+    partial class PlayerUpgrade124
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,31 +122,10 @@ namespace Nutrion.Data.Migrations
                     b.ToTable("BuildingType");
                 });
 
-            modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Color", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("HexCode")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("PlayerId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Color");
-                });
-
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Player", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ColorId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastUpdated")
@@ -159,10 +141,16 @@ namespace Nutrion.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ColorId")
-                        .IsUnique();
-
                     b.ToTable("Player");
+                });
+
+            modelBuilder.Entity("Nutrion.GameLib.Database.Entities.PlayerColor", b =>
+                {
+                    b.Property<string>("HexCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.ToTable("PlayerColor");
                 });
 
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Resource", b =>
@@ -361,16 +349,6 @@ namespace Nutrion.Data.Migrations
                     b.Navigation("BuildingCost");
                 });
 
-            modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Player", b =>
-                {
-                    b.HasOne("Nutrion.GameLib.Database.Entities.Color", "Color")
-                        .WithOne("Player")
-                        .HasForeignKey("Nutrion.GameLib.Database.Entities.Player", "ColorId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Color");
-                });
-
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Resource", b =>
                 {
                     b.HasOne("Nutrion.GameLib.Database.Entities.Account", "Account")
@@ -424,11 +402,6 @@ namespace Nutrion.Data.Migrations
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.BuildingCost", b =>
                 {
                     b.Navigation("RssImpact");
-                });
-
-            modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Color", b =>
-                {
-                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Tile", b =>

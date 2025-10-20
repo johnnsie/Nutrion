@@ -43,8 +43,15 @@ namespace Nutrion.Lib.GameLogic.Systems
 
             try
             {
+                var account = await _db.Account
+                    .Include(a => a.Player)
+                        .ThenInclude(p => p.Color)
+                    .Include(a => a.Resources)
+                    .FirstOrDefaultAsync(a => a.Player.OwnerId == sessionId, cancellationToken);
+
                 // 1️⃣ Load player and building type
-                var player = await _db.Player.FirstOrDefaultAsync(p => p.OwnerId == sessionId, cancellationToken);
+                var player = account?.Player;
+                
                 if (player == null) return LogAndReturn("Player not found");
 
                 var buildingType = await _db.BuildingType
@@ -65,10 +72,6 @@ namespace Nutrion.Lib.GameLogic.Systems
                 var (placeValid, placeReason) = await _validator.ValidatePlacementAsync(player, buildingType, originTile, cancellationToken);
                 if (!placeValid) return LogAndReturn(placeReason);
 
-                // 3️⃣ Deduct resources
-                var account = await _db.Account
-                    .Include(a => a.Resources)
-                    .FirstOrDefaultAsync(a => a.Player.Id == player.Id, cancellationToken);
                 foreach (var cost in buildingType.BuildingCost!.RssImpact)
                 {
                     var res = account!.Resources.First(r => r.Name == cost.Name);
@@ -126,7 +129,7 @@ namespace Nutrion.Lib.GameLogic.Systems
                         // Auto-claim this tile
                         tile.PlayerId = player.Id;
                         tile.OwnerId = player.OwnerId;
-                        tile.Color = player.PlayerColor?.HexCode ?? "#FFFFFF";
+                        tile.Color = player.Color?.HexCode ?? "#FFFFFF";
                     }
                     else
                     {
@@ -146,7 +149,7 @@ namespace Nutrion.Lib.GameLogic.Systems
                         // Optionally mark tile as temporarily owned by same player
                         tile.PlayerId = player.Id;
                         tile.OwnerId = player.OwnerId;
-                        tile.Color = player.PlayerColor?.HexCode ?? "#AAAAAA";
+                        tile.Color = player.Color?.HexCode ?? "#AAAAAA";
                     }
 
                     tile.LastUpdated = DateTimeOffset.UtcNow;

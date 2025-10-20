@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nutrion.Data.Migrations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,7 +19,8 @@ public class Player
     public string Name { get; set; } = string.Empty;
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
 
-    // Navigation
-    public int? PlayerColorId { get; set; }
-    public PlayerColor? PlayerColor { get; set; }
+    [ForeignKey(nameof(ColorId))]
+    public Guid? ColorId { get; set; }
+    public Color? Color { get; set; }
+    
 }

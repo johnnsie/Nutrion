@@ -95,7 +95,8 @@ public class GameEventConsumer : BackgroundService
                     if (player != null)
                     {
                         await notifier.BroadcastPlayerJoinedAsync(player, ct);
-                        await notifier.SendToSessionAsync(player.OwnerId, "AccountState", player.Name);
+                        // This is too soon and bugs things
+                        //await notifier.SendToSessionAsync(player.OwnerId, "AccountState", player.Name);
                     }
                     else
                         _logger.LogWarning("⚠️ Invalid player event JSON: {Json}", json);

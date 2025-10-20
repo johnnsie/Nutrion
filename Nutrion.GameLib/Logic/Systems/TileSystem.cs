@@ -31,7 +31,7 @@ public class TileSystem
             // 1️⃣ Validate player
             _logger.LogDebug("🔍 Fetching player for SessionId {SessionId}", sessionId);
             var player = await _db.Player
-                .Include(p => p.PlayerColor)
+                .Include(p => p.Color)
                 .FirstOrDefaultAsync(p => p.OwnerId == sessionId, cancellationToken);
 
             if (player == null)
@@ -41,7 +41,7 @@ public class TileSystem
             }
 
             _logger.LogDebug("✅ Player found: {PlayerName} (Id={PlayerId}, Color={Color})",
-                player.Name, player.Id, player.PlayerColor?.HexCode ?? "#FFFFFF");
+                player.Name, player.Id, player.Color?.HexCode ?? "#FFFFFF");
 
             // 2️⃣ Load the existing tile using Q/R (not Id)
             _logger.LogDebug("🔍 Searching tile at coordinates ({Q},{R})", tile.Q, tile.R);
@@ -66,7 +66,7 @@ public class TileSystem
             }
 
             // 4️⃣ Assign ownership + color
-            var color = player.PlayerColor?.HexCode ?? "#FFFFFF";
+            var color = player.Color?.HexCode ?? "#FFFFFF";
             _logger.LogInformation("🎨 Assigning tile ({Q},{R}) to player {PlayerName} (Color={Color})",
                 existingTile.Q, existingTile.R, player.Name, color);
 

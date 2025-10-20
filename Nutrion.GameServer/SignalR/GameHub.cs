@@ -111,7 +111,7 @@ public class GameHub : Hub
             case "game.commands.get.buildings":
                 return await _buildingRepo.GetAllAsync(
                             include: q => q.Include(b => b.PlayerOwner)
-                                           .ThenInclude(p => p.PlayerColor)
+                                           .ThenInclude(p => p.Color)
                                            .Include(b => b.BuildingType)
                                                .ThenInclude(bt => bt.BuildingCost)
                                                    .ThenInclude(bc => bc.RssImpact)
@@ -151,12 +151,12 @@ public class GameHub : Hub
         var account = await _readRepo.GetAsync(
             a => a.Player.Name == playerName,
             include: q => q.Include(a => a.Player)
-                           .ThenInclude(p => p.PlayerColor)
+                           .ThenInclude(p => p.Color)
                            .Include(a => a.Resources)
         );
 
         Console.WriteLine($"🟢 HOW MANY : {account}");
-        Console.WriteLine($"🟢 my super color : {account.Player.PlayerColor.HexCode}");
+        Console.WriteLine($"🟢 my super color : {account.Player.Color.HexCode}");
 
         await Clients.Caller.SendAsync("AccountState", account);
     }

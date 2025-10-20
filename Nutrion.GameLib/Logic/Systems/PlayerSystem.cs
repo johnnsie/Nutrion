@@ -44,28 +44,23 @@ public class PlayerSystem
 
         try
         {
+            string uniqueColor = await GenerateUniqueColorAsync(cancellationToken);
+
             // 1️⃣ Create new player
             var newPlayer = new Player
             {
                 OwnerId = player.OwnerId,
                 Name = player.Name,
-                LastUpdated = DateTimeOffset.UtcNow
+                LastUpdated = DateTimeOffset.UtcNow,
+                Color = new GameLib.Database.Entities.Color
+                {
+                    HexCode = uniqueColor                
+                }
             };
 
             await _db.Player.AddAsync(newPlayer, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            //await _db.PlayerColor.AddAsync(playerColor, cancellationToken);
 
-            // 2️⃣ Generate a random, unused color
-            string uniqueColor = await GenerateUniqueColorAsync(cancellationToken);
-
-            // 3️⃣ Create PlayerColor entry
-            var playerColor = new PlayerColor
-            {
-                HexCode = uniqueColor,
-                PlayerId = newPlayer.Id
-            };
-
-            await _db.PlayerColor.AddAsync(playerColor, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             // 4️⃣ Create associated Account
@@ -110,7 +105,7 @@ public class PlayerSystem
         for (int i = 0; i < maxAttempts; i++)
         {
             var color = $"#{_random.Next(0x1000000):X6}"; // #RRGGBB
-            bool exists = await _db.PlayerColor.AnyAsync(c => c.HexCode == color, ct);
+            bool exists = await _db.Color.AnyAsync(c => c.HexCode == color, ct);
 
             if (!exists)
             {

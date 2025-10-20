@@ -14,10 +14,10 @@ public class TileContent
 
     // Foreign key to parent Tile
     [Required]
-    [ForeignKey(nameof(Tile))]
+    [ForeignKey(nameof(TileId))]
     public int TileId { get; set; }
 
-    public Tile Tile { get; set; } = null!;
+    public Tile Tile { get; set; } = null!; 
 
     /// <summary>
     /// The GLTF component name or path used by the front-end to render this content.
