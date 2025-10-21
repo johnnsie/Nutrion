@@ -53,14 +53,14 @@ public class DatabaseMigrator : IDatabaseMigrator
                 return (x, z);
             }
 
-            int radius = 60;              // adjust until ~2000 tiles
-            double circleRadius = 40.0;   // world-space radius
+            int axialRadius = 120;         // search bounds for q/r loops
+            double circleRadius = 90.0;    // world-space radius ≈ 10,000 tiles
 
             var tiles = new List<Tile>();
 
-            for (int q = -radius; q <= radius; q++)
+            for (int q = -axialRadius; q <= axialRadius; q++)
             {
-                for (int r = -radius; r <= radius; r++)
+                for (int r = -axialRadius; r <= axialRadius; r++)
                 {
                     var (x, z) = TileToWorld(q, r);
                     double distance = Math.Sqrt(x * x + z * z);
@@ -83,12 +83,10 @@ public class DatabaseMigrator : IDatabaseMigrator
 
             _logger.LogInformation("✅  Seeded {Count} circular hex tiles.", tiles.Count);
 
-
             await _db.Tile.AddRangeAsync(tiles, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("✅  Seed complete ({Count} hex tiles).", tiles.Count);
         }
-
     }
 
     public async Task SeedBuildingTypes(CancellationToken cancellationToken = default)
