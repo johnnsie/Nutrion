@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Nutrion.OrchestratorService/Nutrion.OrchestratorService.csproj
+/Nutrion.WebApi/Nutrion.WebApi.csproj
+/ConsoleConsumer/ConsoleConsumer.csproj
