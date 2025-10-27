@@ -20,7 +20,7 @@ public class Building
     public Player PlayerOwner { get; set; } = null!;
     public string Name { get; set; } = string.Empty;
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
-    // --- New: deterministic link to the origin tile (single entry point)
+
     public int OriginTileId { get; set; }
 
     [ForeignKey(nameof(OriginTileId))]

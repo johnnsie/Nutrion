@@ -26,10 +26,19 @@ public class Resource
     [ForeignKey(nameof(AccountId))]
     public Guid? AccountId { get; set; }
     public Account? Account { get; set; } = null!;
+    public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
 
     [ForeignKey(nameof(BuildingCostId))]
     public Guid? BuildingCostId { get; set; }
     public BuildingCost? BuildingCost { get; set; }
+
+    // For resources found on the map
+    public int? OriginTileId { get; set; }
+
+    [ForeignKey(nameof(OriginTileId))]
+    public Tile? OriginTile { get; set; } = null!;
+
+    public string? GLTFModelPath { get; set; } = string.Empty;
 
     public ResourceType ResourceType { get; set; } = ResourceType.Generic;
 }
@@ -39,5 +48,6 @@ public enum ResourceType
 {
     Generic = 0,   // fallback
     Account = 1,   // belongs to player
-    BuildingCost = 2  // used as cost template
+    BuildingCost = 2,  // used as cost template
+    MapResource = 3 // resource found on map
 }

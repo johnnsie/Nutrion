@@ -85,6 +85,9 @@ public class DatabaseMigrator : IDatabaseMigrator
 
             await _db.Tile.AddRangeAsync(tiles, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+
+            await SeedResourcePodsAsync(tiles, cancellationToken);
+
             _logger.LogInformation("✅  Seed complete ({Count} hex tiles).", tiles.Count);
         }
     }
@@ -102,11 +105,11 @@ public class DatabaseMigrator : IDatabaseMigrator
                 LevelMultiplier = 2,
                 RssImpact = new List<Resource>
         {
-            new Resource { Name = "Energy", Quantity = +300 },
-            new Resource { Name = "Metal", Quantity = -300 },
-            new Resource { Name = "Fuel", Quantity = 0 },
-            new Resource { Name = "Population", Quantity = +500 },
-            new Resource { Name = "Food", Quantity = 0 },
+            new Resource { Name = "Energy", Quantity = +300, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Metal", Quantity = -300, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Fuel", Quantity = 0, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Population", Quantity = +500, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Food", Quantity = 0, ResourceType = ResourceType.BuildingCost },
         }
             };
 
@@ -116,11 +119,11 @@ public class DatabaseMigrator : IDatabaseMigrator
                 LevelMultiplier = 2,
                 RssImpact = new List<Resource>
         {
-            new Resource { Name = "Energy", Quantity = +500 },
-            new Resource { Name = "Metal", Quantity = -600 },
-            new Resource { Name = "Fuel", Quantity = +300 },
-            new Resource { Name = "Population", Quantity = -400 },
-            new Resource { Name = "Food", Quantity = -200 },
+            new Resource { Name = "Energy", Quantity = +500, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Metal", Quantity = -600, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Fuel", Quantity = +300, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Population", Quantity = -400, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Food", Quantity = -200, ResourceType = ResourceType.BuildingCost },
         }
             };
 
@@ -130,11 +133,11 @@ public class DatabaseMigrator : IDatabaseMigrator
                 LevelMultiplier = 2,
                 RssImpact = new List<Resource>
         {
-            new Resource { Name = "Energy", Quantity = -100 },
-            new Resource { Name = "Metal", Quantity = -200 },
-            new Resource { Name = "Fuel", Quantity = 0 },
-            new Resource { Name = "Population", Quantity = -100 },
-            new Resource { Name = "Food", Quantity = -100 },
+            new Resource { Name = "Energy", Quantity = -100, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Metal", Quantity = -200, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Fuel", Quantity = 0, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Population", Quantity = -100, ResourceType = ResourceType.BuildingCost },
+            new Resource { Name = "Food", Quantity = -100, ResourceType = ResourceType.BuildingCost },
         }
             };
 
@@ -183,4 +186,66 @@ public class DatabaseMigrator : IDatabaseMigrator
 
 
     }
+
+    public async Task SeedResourcePodsAsync(List<Tile> tiles, CancellationToken cancellationToken = default)
+    {
+        if (tiles == null || tiles.Count == 0)
+        {
+            _logger.LogWarning("⚠️ No tiles provided for resource seeding.");
+            return;
+        }
+
+        // Only seed if there are no resources yet
+        if (await _db.Resource.AnyAsync(cancellationToken))
+        {
+            //_logger.LogInformation("ℹ️ Resource pods already exist. Skipping seeding.");
+           // return;
+        }
+
+        var random = new Random();
+        var resourcePods = new List<Resource>();
+        var resourceTypes = new[]
+        {
+            new { Name = "Energy Pod", Quantity = 1000, Model="s" },
+            new { Name = "Metal Pod", Quantity = 800, Model="s" },
+            new { Name = "Fuel Pod", Quantity = 500, Model="s" },
+            new { Name = "Food Pod", Quantity = 1200, Model="s" }
+        };
+
+        // Total pods per type
+        const int podsPerType = 100;
+        var usedTileIndices = new HashSet<int>();
+
+        foreach (var type in resourceTypes)
+        {
+            for (int i = 0; i < podsPerType; i++)
+            {
+                // Pick a unique random tile
+                int tileIndex;
+                do
+                {
+                    tileIndex = random.Next(tiles.Count);
+                } while (!usedTileIndices.Add(tileIndex));
+
+                var tile = tiles[tileIndex];
+
+                resourcePods.Add(new Resource
+                {
+                    Name = type.Name,
+                    Quantity = type.Quantity,
+                    ResourceType = ResourceType.MapResource,
+                    OriginTile = tile,
+                    GLTFModelPath = type.Model,
+                    LastUpdated = DateTimeOffset.UtcNow,
+                    
+                });
+            }
+        }
+
+        await _db.Resource.AddRangeAsync(resourcePods, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation($"✅ Seeded {resourcePods.Count} resource pods across {tiles.Count} tiles.");
+    }
+
 }
