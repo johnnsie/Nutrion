@@ -25,20 +25,22 @@ public class GameHub : Hub
     private readonly IReadRepository<Account> _readRepo;
     private readonly IReadRepository<Building> _buildingRepo;
     private readonly IReadRepository<BuildingType> _buildingTypeRepo;
+    private readonly IReadRepository<Resource> _resourceRepo;
 
     public GameHub(
         IMessageProducer bus,
         IReadRepository<Tile> tileRepo, 
         IReadRepository<Account> readRepo,
         IReadRepository<Building> buildingRepo,
-        IReadRepository<BuildingType> buildingTypeRepo
-        )
+        IReadRepository<BuildingType> buildingTypeRepo,
+        IReadRepository<Resource> resourceRepo)
     {
         _bus = bus;
         _tileRepo = tileRepo;
         _readRepo = readRepo;
         _buildingRepo = buildingRepo;
         _buildingTypeRepo = buildingTypeRepo;
+        _resourceRepo = resourceRepo;
     }
 
     public override async Task OnConnectedAsync()
@@ -116,6 +118,13 @@ public class GameHub : Hub
                                                .ThenInclude(bt => bt.BuildingCost)
                                                    .ThenInclude(bc => bc.RssImpact)
                         );
+
+            case "game.commands.get.resources.map":
+                return await _resourceRepo.FindAsync(
+                    r => r.ResourceType == ResourceType.MapResource,
+                    include: q => q
+                        .Include(r => r.OriginTile)
+                );
             default:
                 throw new Exception($"Unknown topic: {request.Topic}");
         }
