@@ -206,14 +206,14 @@ public class DatabaseMigrator : IDatabaseMigrator
         var resourcePods = new List<Resource>();
         var resourceTypes = new[]
         {
-            new { Name = "Energy Pod", Quantity = 1000, Model="models/buildings/rss.glb" },
-            new { Name = "Metal Pod", Quantity = 800, Model="models/buildings/rss.glb" },
-            new { Name = "Fuel Pod", Quantity = 500, Model="models/buildings/rss.glb" },
-            new { Name = "Food Pod", Quantity = 1200, Model="models/buildings/rss.glb" }
+            new { Name = "Energy Pod", Quantity = 1000, Model="models/buildings/energy.glb" },
+            new { Name = "Metal Pod", Quantity = 800, Model="models/buildings/metal.glb" },
+            new { Name = "Fuel Pod", Quantity = 500, Model="models/buildings/fuel.glb" },
+            new { Name = "Food Pod", Quantity = 1200, Model="models/buildings/food.glb" }
         };
 
         // Total pods per type
-        const int podsPerType = 30;
+        const int podsPerType = 800;
         var usedTileIndices = new HashSet<int>();
 
         foreach (var type in resourceTypes)

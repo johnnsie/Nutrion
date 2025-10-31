@@ -114,6 +114,8 @@ public class GameHub : Hub
                 return await _buildingRepo.GetAllAsync(
                             include: q => q.Include(b => b.PlayerOwner)
                                            .ThenInclude(p => p.Color)
+                                           .Include(a => a.OriginTile)
+                                           .Include(b => b.OccupiedTiles)
                                            .Include(b => b.BuildingType)
                                                .ThenInclude(bt => bt.BuildingCost)
                                                    .ThenInclude(bc => bc.RssImpact)

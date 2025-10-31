@@ -80,8 +80,8 @@ public class BuildingWorker : MessageWorkerBase<GameClientEvent>
         var building = (Building)payload;
         var buildingSystem = scope.ServiceProvider.GetRequiredService<BuildingSystem>();
 
-
-        var updated = await buildingSystem.CreateBuildingAsync(sessionId, (Guid)building.BuildingTypeId, building.OriginTileId, ct);
+        var updated = await buildingSystem.CreateBuildingActionAsync(sessionId, (Guid)building.BuildingTypeId, building.OriginTileId);
+        //var updated = await buildingSystem.CreateBuildingAsync(sessionId, (Guid)building.BuildingTypeId, building.OriginTileId, ct);
         if (updated == null)
             return MessageResult.NackDrop;
 
