@@ -65,17 +65,17 @@ public class GameHubNotifier
     
     public Task BroadcastPlayerJoinedAsync(Player player, CancellationToken ct = default)
     {
-        Console.WriteLine($"📡 Broadcasting PlayerJoined: {player.Name}");
+        Console.WriteLine($"📡 Broadcasting UserJoined: {player.Name}");
         return _hub.Clients.All.SendAsync("UserJoined", player, ct);
     }
     public Task BroadcastTileBuiltAsync(TileContent tileContent, CancellationToken ct = default)
     {
-        Console.WriteLine($"📡 Broadcasting TileContent: {tileContent.GLTFComponent}");
+        Console.WriteLine($"📡 Broadcasting TileBuilt: {tileContent.GLTFComponent}");
         return _hub.Clients.All.SendAsync("TileBuilt", tileContent, ct);
     }
     public Task BroadcastBuildingBuiltAsync(Building building, CancellationToken ct = default)
     {
-        Console.WriteLine($"📡 Broadcasting TileContent: {building.BuildingType}");
+        Console.WriteLine($"📡 Broadcasting BuildingBuilt: {building.BuildingType}");
         return _hub.Clients.All.SendAsync("BuildingBuilt", building, ct);
     }
 }

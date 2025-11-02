@@ -55,6 +55,26 @@ public class AppDbContext : DbContext, IAppDbContext
             .HasForeignKey<Player>(p => p.ColorId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<Tile>()
+            .HasMany(t => t.Players)
+            .WithMany() // Player has no collection of Tiles
+            .UsingEntity(
+                "PlayerTile",
+                right => right.HasOne(typeof(Player))
+                              .WithMany()
+                              .HasForeignKey("PlayerId")
+                              .OnDelete(DeleteBehavior.Cascade),
+                left => left.HasOne(typeof(Tile))
+                             .WithMany()
+                             .HasForeignKey("TileId")
+                             .OnDelete(DeleteBehavior.Cascade),
+                join =>
+                {
+                    join.HasKey("PlayerId", "TileId");
+                    join.ToTable("PlayerTile");
+                });
+
+
 
     }
 }

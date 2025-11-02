@@ -26,7 +26,7 @@ namespace Nutrion.Lib.GameLogic.Validation
             Player player, BuildingType buildingType, Tile originTile, CancellationToken cancellationToken = default)
         {
             // 🧱 RULE 1: Origin tile must be unowned by any player
-            if (originTile.PlayerId != null)
+            if (originTile.Players.Count > 0)
                 return (false, $"Tile ({originTile.Q},{originTile.R}) already belongs to a player.");
 
             // 🧱 (optional fallback for legacy data)

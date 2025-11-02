@@ -74,8 +74,6 @@ public class DatabaseMigrator : IDatabaseMigrator
                             OwnerId = "",
                             Color = "#000000",
                             LastUpdated = DateTimeOffset.UtcNow,
-                            Player = null,
-                            PlayerId = null,
                         });
                     }
                 }

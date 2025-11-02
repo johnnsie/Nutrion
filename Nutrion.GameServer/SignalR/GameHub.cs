@@ -54,7 +54,8 @@ public class GameHub : Hub
         await Clients.Caller.SendAsync("Connected", new { id });
 
         var tiles = await _tileRepo.GetAllAsync(
-            include: q => q.Include(t => t.Contents));
+            include: q => q.Include(t => t.Contents)
+                            .Include(t => t.Players));
 
         await Clients.Caller.SendAsync("BoardState", new Board(tiles));
 
@@ -116,6 +117,7 @@ public class GameHub : Hub
                                            .ThenInclude(p => p.Color)
                                            .Include(a => a.OriginTile)
                                            .Include(b => b.OccupiedTiles)
+                                                .ThenInclude(bt => bt.Players)
                                            .Include(b => b.BuildingType)
                                                .ThenInclude(bt => bt.BuildingCost)
                                                    .ThenInclude(bc => bc.RssImpact)

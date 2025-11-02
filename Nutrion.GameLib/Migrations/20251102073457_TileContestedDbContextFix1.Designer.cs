@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrion.GameLib.Database;
@@ -11,9 +12,11 @@ using Nutrion.GameLib.Database;
 namespace Nutrion.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251102073457_TileContestedDbContextFix1")]
+    partial class TileContestedDbContextFix1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -157,10 +160,15 @@ namespace Nutrion.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("TileId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ColorId")
                         .IsUnique();
+
+                    b.HasIndex("TileId");
 
                     b.ToTable("Player");
                 });
@@ -324,21 +332,6 @@ namespace Nutrion.Data.Migrations
                     b.ToTable("OutboxMessage");
                 });
 
-            modelBuilder.Entity("PlayerTile", b =>
-                {
-                    b.Property<Guid>("PlayerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("TileId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("PlayerId", "TileId");
-
-                    b.HasIndex("TileId");
-
-                    b.ToTable("PlayerTile", (string)null);
-                });
-
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Account", b =>
                 {
                     b.HasOne("Nutrion.GameLib.Database.Entities.Player", "Player")
@@ -389,6 +382,10 @@ namespace Nutrion.Data.Migrations
                         .HasForeignKey("Nutrion.GameLib.Database.Entities.Player", "ColorId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Nutrion.GameLib.Database.Entities.Tile", null)
+                        .WithMany("Players")
+                        .HasForeignKey("TileId");
+
                     b.Navigation("Color");
                 });
 
@@ -432,21 +429,6 @@ namespace Nutrion.Data.Migrations
                     b.Navigation("Tile");
                 });
 
-            modelBuilder.Entity("PlayerTile", b =>
-                {
-                    b.HasOne("Nutrion.GameLib.Database.Entities.Player", null)
-                        .WithMany()
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nutrion.GameLib.Database.Entities.Tile", null)
-                        .WithMany()
-                        .HasForeignKey("TileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Account", b =>
                 {
                     b.Navigation("Resources");
@@ -470,6 +452,8 @@ namespace Nutrion.Data.Migrations
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Tile", b =>
                 {
                     b.Navigation("Contents");
+
+                    b.Navigation("Players");
                 });
 #pragma warning restore 612, 618
         }

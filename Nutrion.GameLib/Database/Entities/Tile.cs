@@ -17,12 +17,7 @@ public class Tile
     // OwnerId is the external session identifier (SignalR / front end)
     [Required]
     public string OwnerId { get; set; } = string.Empty;
-
-    // Foreign key to Player entity
-    [ForeignKey(nameof(Player))]
-    public Guid? PlayerId { get; set; }
-
-    public Player? Player { get; set; }
+    public ICollection<Player> Players { get; set; } = new List<Player>();
 
     public string Color { get; set; } = string.Empty;
 

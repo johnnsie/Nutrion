@@ -55,10 +55,10 @@ public class TileSystem
             }
 
             _logger.LogDebug("✅ Tile found: Id={TileId}, OwnerId={OwnerId}, PlayerId={PlayerId}",
-                existingTile.Id, existingTile.OwnerId ?? "<none>", existingTile.PlayerId);
+                existingTile.Id, existingTile.OwnerId ?? "<none>", existingTile.Players.Count > 0);
 
             // 3️⃣ Skip if already owned
-            if (existingTile.PlayerId == player.Id)
+            if (existingTile.Players.Count > 0)
             {
                 _logger.LogDebug("⚠️ Tile ({Q},{R}) already belongs to player {PlayerName} (Id={PlayerId})",
                     existingTile.Q, existingTile.R, player.Name, player.Id);
@@ -70,7 +70,8 @@ public class TileSystem
             _logger.LogInformation("🎨 Assigning tile ({Q},{R}) to player {PlayerName} (Color={Color})",
                 existingTile.Q, existingTile.R, player.Name, color);
 
-            existingTile.PlayerId = player.Id;
+            existingTile.Players.Clear();
+            existingTile.Players.Add(player);
             existingTile.OwnerId = player.OwnerId;
             existingTile.Color = color;
             existingTile.LastUpdated = DateTimeOffset.UtcNow;

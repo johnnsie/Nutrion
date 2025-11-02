@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Nutrion.GameLib.Database;
@@ -11,9 +12,11 @@ using Nutrion.GameLib.Database;
 namespace Nutrion.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251102070601_TileContested")]
+    partial class TileContested
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -326,17 +329,17 @@ namespace Nutrion.Data.Migrations
 
             modelBuilder.Entity("PlayerTile", b =>
                 {
-                    b.Property<Guid>("PlayerId")
+                    b.Property<Guid>("PlayersId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("TileId")
+                    b.Property<int>("TilesId")
                         .HasColumnType("integer");
 
-                    b.HasKey("PlayerId", "TileId");
+                    b.HasKey("PlayersId", "TilesId");
 
-                    b.HasIndex("TileId");
+                    b.HasIndex("TilesId");
 
-                    b.ToTable("PlayerTile", (string)null);
+                    b.ToTable("PlayerTile");
                 });
 
             modelBuilder.Entity("Nutrion.GameLib.Database.Entities.Account", b =>
@@ -436,13 +439,13 @@ namespace Nutrion.Data.Migrations
                 {
                     b.HasOne("Nutrion.GameLib.Database.Entities.Player", null)
                         .WithMany()
-                        .HasForeignKey("PlayerId")
+                        .HasForeignKey("PlayersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Nutrion.GameLib.Database.Entities.Tile", null)
                         .WithMany()
-                        .HasForeignKey("TileId")
+                        .HasForeignKey("TilesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

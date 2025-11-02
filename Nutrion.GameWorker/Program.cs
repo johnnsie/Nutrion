@@ -2,6 +2,7 @@
 using Nutrion.GameLib.Database;
 using Nutrion.GameLib.Database.EntityRepository;
 using Nutrion.GameLib.Database.Init;
+using Nutrion.GameLib.TheDomain;
 using Nutrion.GameServer.Worker;
 using Nutrion.Lib.Database;
 using Nutrion.Lib.Database.Hydration;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<PlayerSystem>();
 builder.Services.AddScoped<TileSystem>();
 builder.Services.AddScoped<BuildingValidator>();
 builder.Services.AddScoped<BuildingSystem>();
+builder.Services.AddScoped<GameActionService>();
 
 
 builder.Services.AddHostedService<TileWorker>();

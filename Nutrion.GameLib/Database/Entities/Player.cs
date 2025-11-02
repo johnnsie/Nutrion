@@ -22,5 +22,6 @@ public class Player
     [ForeignKey(nameof(ColorId))]
     public Guid? ColorId { get; set; }
     public Color? Color { get; set; }
-    
+
+
 }
